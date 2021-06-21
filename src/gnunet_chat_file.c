@@ -73,5 +73,5 @@ GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file)
   if (!file)
     return;
 
-  GNUNET_FS_download_stop(file, GNUNET_YES);
+  GNUNET_FS_download_stop(file->context, GNUNET_YES);
 }

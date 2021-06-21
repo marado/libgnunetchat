@@ -32,15 +32,20 @@ struct GNUNET_CHAT_Contact
   struct GNUNET_CHAT_Handle *handle;
   struct GNUNET_CHAT_Context *context;
 
-  struct GNUNET_MESSENGER_Contact *contact;
-
-  char *nick;
+  const struct GNUNET_MESSENGER_Contact *contact;
 };
 
 struct GNUNET_CHAT_Contact*
-contact_create (struct GNUNET_CHAT_Handle *handle);
+contact_create (struct GNUNET_CHAT_Handle *handle,
+		const struct GNUNET_MESSENGER_Contact *msg_contact);
 
 void
 contact_destroy (struct GNUNET_CHAT_Contact *contact);
+
+int
+contact_call (struct GNUNET_CHAT_Handle *handle,
+	      const struct GNUNET_MESSENGER_Contact *msg_contact,
+	      GNUNET_CHAT_ContactCallback callback,
+	      void *cls);
 
 #endif /* GNUNET_CHAT_CONTACT_H_ */

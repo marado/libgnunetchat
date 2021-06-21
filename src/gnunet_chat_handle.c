@@ -37,10 +37,11 @@ static void handle_arm_connection(void* cls, int connected) {
   }
 }
 
-
 struct GNUNET_CHAT_Handle*
 GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle* cfg,
-		     const char *name) {
+				   const char *name,
+				   GNUNET_CHAT_WarningCallback warn_cb,
+				   void *warn_cls) {
   if (!cfg)
     return NULL;
 
@@ -142,14 +143,14 @@ GNUNET_CHAT_set_name (struct GNUNET_CHAT_Handle *handle,
   if (!handle)
     return GNUNET_SYSERR;
 
-  return GNUNET_MESSENGER_set_name(handle, name);
+  return GNUNET_MESSENGER_set_name(handle->handles.messenger, name);
 }
 
 const char*
 GNUNET_CHAT_get_name (const struct GNUNET_CHAT_Handle *handle)
 {
   if (!handle)
-    return GNUNET_SYSERR;
+    return NULL;
 
   return GNUNET_MESSENGER_get_name(handle->handles.messenger);
 }
@@ -158,9 +159,29 @@ const struct GNUNET_IDENTITY_PublicKey*
 GNUNET_CHAT_get_key (const struct GNUNET_CHAT_Handle *handle)
 {
   if (!handle)
-    return GNUNET_SYSERR;
+    return NULL;
 
   return GNUNET_MESSENGER_get_key(handle->handles.messenger);
+}
+
+struct GNUNET_CHAT_IterateContacts
+{
+  struct GNUNET_CHAT_Handle *handle;
+  GNUNET_CHAT_ContactCallback callback;
+  void *cls;
+};
+
+static int
+handle_iterate_contacts(void *cls, const struct GNUNET_HashCode *key,
+			void *value)
+{
+  struct GNUNET_CHAT_IterateContacts *iterate = cls;
+  struct GNUNET_CHAT_Contact *contact = value;
+
+  if (!iterate->callback)
+    return GNUNET_YES;
+
+  return iterate->callback(iterate->cls, iterate->handle, contact);
 }
 
 int
@@ -168,16 +189,47 @@ GNUNET_CHAT_iterate_contacts (struct GNUNET_CHAT_Handle *handle,
 			      GNUNET_CHAT_ContactCallback callback,
 			      void *cls)
 {
-  return GNUNET_SYSERR;
+  if (!handle)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_CHAT_IterateContacts iterate;
+  iterate.handle = handle;
+  iterate.callback = callback;
+  iterate.cls = cls;
+
+  return GNUNET_CONTAINER_multihashmap_iterate(handle->contacts,
+					       handle_iterate_contacts,
+					       &iterate);
 }
 
 struct GNUNET_CHAT_Group*
-GNUNET_CHAT_group_create (struct GNUNET_CHAT_Handle *handle)
+GNUNET_CHAT_group_create (struct GNUNET_CHAT_Handle *handle,
+			  const char *topic)
 {
   if (!handle)
     return NULL;
 
-  return group_create(handle);
+  return group_create(handle, topic);
+}
+
+struct GNUNET_CHAT_IterateGroups
+{
+  struct GNUNET_CHAT_Handle *handle;
+  GNUNET_CHAT_GroupCallback callback;
+  void *cls;
+};
+
+static int
+handle_iterate_groups(void *cls, const struct GNUNET_HashCode *key,
+			void *value)
+{
+  struct GNUNET_CHAT_IterateGroups *iterate = cls;
+  struct GNUNET_CHAT_Group *group = value;
+
+  if (!iterate->callback)
+    return GNUNET_YES;
+
+  return iterate->callback(iterate->cls, iterate->handle, group);
 }
 
 int
@@ -185,5 +237,15 @@ GNUNET_CHAT_iterate_groups (struct GNUNET_CHAT_Handle *handle,
 			    GNUNET_CHAT_GroupCallback callback,
 			    void *cls)
 {
-  return GNUNET_SYSERR;
+  if (!handle)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_CHAT_IterateGroups iterate;
+  iterate.handle = handle;
+  iterate.callback = callback;
+  iterate.cls = cls;
+
+  return GNUNET_CONTAINER_multihashmap_iterate(handle->groups,
+					       handle_iterate_contacts,
+					       &iterate);
 }

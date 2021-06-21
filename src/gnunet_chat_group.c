@@ -25,15 +25,26 @@
 #include "gnunet_chat_lib.h"
 #include "gnunet_chat_group.h"
 #include "gnunet_chat_handle.h"
+#include "gnunet_chat_contact.h"
 
 struct GNUNET_CHAT_Group*
-group_create(struct GNUNET_CHAT_Handle *handle)
+group_create(struct GNUNET_CHAT_Handle *handle,
+	     const char *topic)
 {
+  struct GNUNET_HashCode topic_key;
+
+  if (topic) {
+    GNUNET_CRYPTO_hash(topic, strlen(topic), &topic_key);
+  }
+
   struct GNUNET_CHAT_Group *group = GNUNET_new(struct GNUNET_CHAT_Group);
 
   group->handle = handle;
-  group->context = context_create(handle, NULL);
-  group->name = NULL;
+  group->context = context_create(
+      handle,
+      GNUNET_CHAT_CONTEXT_TYPE_GROUP,
+      topic? &topic_key : NULL
+  );
 
   if (!group->context)
   {
@@ -76,9 +87,6 @@ group_destroy(struct GNUNET_CHAT_Group* group)
   context_destroy(group->context);
 
 skip_context:
-  if (group->name)
-    GNUNET_free(group->name);
-
   GNUNET_free(group);
 }
 
@@ -101,10 +109,8 @@ GNUNET_CHAT_group_set_name (struct GNUNET_CHAT_Group *group,
   if (!group)
     return;
 
-  if (group->name)
-    GNUNET_free(group->name);
-
-  group->name = name? GNUNET_strdup(name) : NULL;
+  if (group->context)
+    context_set_nick(group->context, name);
 }
 
 const char*
@@ -113,7 +119,10 @@ GNUNET_CHAT_group_get_name (const struct GNUNET_CHAT_Group *group)
   if (!group)
     return NULL;
 
-  return group->name;
+  if (!group->context)
+    return NULL;
+
+  return context_get_nick(group->context);
 }
 
 void
@@ -159,12 +168,26 @@ struct GNUNET_CHAT_GroupIterateContacts
 };
 
 static int
+group_call_member (void* cls, struct GNUNET_CHAT_Handle *handle,
+		   struct GNUNET_CHAT_Contact *contact)
+{
+  struct GNUNET_CHAT_GroupIterateContacts *iterate = cls;
+
+  return iterate->callback(iterate->cls, iterate->group, contact);
+}
+
+static int
 group_iterate_members (void* cls, struct GNUNET_MESSENGER_Room *room,
                        const struct GNUNET_MESSENGER_Contact *contact)
 {
   struct GNUNET_CHAT_GroupIterateContacts *iterate = cls;
 
-  return iterate->callback(iterate->cls, iterate->group, NULL); // TODO
+  return contact_call(
+      iterate->group->handle,
+      contact,
+      group_call_member,
+      iterate
+  );
 }
 
 int

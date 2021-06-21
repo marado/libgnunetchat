@@ -27,15 +27,19 @@
 #include "gnunet_chat_handle.h"
 
 struct GNUNET_CHAT_Contact*
-contact_create (struct GNUNET_CHAT_Handle *handle)
+contact_create (struct GNUNET_CHAT_Handle *handle,
+		const struct GNUNET_MESSENGER_Contact *msg_contact)
 {
   struct GNUNET_CHAT_Contact* contact = GNUNET_new(struct GNUNET_CHAT_Contact);
 
   contact->handle = handle;
-  contact->context = context_create(handle, NULL); // TODO: check for existing context?
+  contact->context = context_create(
+      handle,
+      GNUNET_CHAT_CONTEXT_TYPE_CONTACT,
+      NULL
+  ); // TODO: check for existing context?
 
-  contact->contact = NULL;
-  contact->nick = NULL;
+  contact->contact = msg_contact;
 
   if (!contact->context)
   {
@@ -78,8 +82,56 @@ contact_destroy (struct GNUNET_CHAT_Contact *contact)
   context_destroy(contact->context);
 
 skip_context:
-  if (contact->nick)
-    GNUNET_free(contact->nick);
+  GNUNET_free(contact);
+}
+
+struct GNUNET_CHAT_SearchContact
+{
+  struct GNUNET_MESSENGER_Contact *contact;
+  const struct GNUNET_MESSENGER_Contact *msg_contact;
+};
+
+static int
+contact_search (void *cls, const struct GNUNET_HashCode *key, void *value)
+{
+  struct GNUNET_CHAT_Contact *contact = value;
+  struct GNUNET_CHAT_SearchContact *search = cls;
+
+  if (contact->contact == search->msg_contact)
+  {
+    search->contact = contact;
+    return GNUNET_NO;
+  }
+
+  return GNUNET_YES;
+}
+
+int
+contact_call (struct GNUNET_CHAT_Handle *handle,
+	      const struct GNUNET_MESSENGER_Contact *msg_contact,
+	      GNUNET_CHAT_ContactCallback callback,
+	      void *cls)
+{
+  struct GNUNET_CHAT_SearchContact search;
+  search.contact = NULL;
+  search.msg_contact = msg_contact;
+
+  GNUNET_CONTAINER_multihashmap_iterate(
+      handle->contacts,
+      contact_search,
+      &search
+  );
+
+  if (search.contact)
+    return callback(cls, handle, search.contact);
+
+  search.contact = contact_create(handle, msg_contact);
+  int result = callback(cls, handle, search.contact);
+
+  // TODO: check if contact has private chat
+
+  contact_destroy(search.contact);
+  return result;
 }
 
 int
@@ -96,29 +148,14 @@ GNUNET_CHAT_contact_delete (struct GNUNET_CHAT_Contact *contact)
 }
 
 void
-GNUNET_CHAT_contact_set_blocking (struct GNUNET_CHAT_Contact *contact,
-				  int blocking)
-{
-  //TODO
-}
-
-int
-GNUNET_CHAT_contact_is_blocking (const struct GNUNET_CHAT_Contact *contact)
-{
-  return GNUNET_NO;
-}
-
-void
 GNUNET_CHAT_contact_set_name (struct GNUNET_CHAT_Contact *contact,
 			      const char *name)
 {
   if (!contact)
     return;
 
-  if (contact->nick)
-    GNUNET_free(contact->nick);
-
-  contact->nick = name? GNUNET_strdup(name) : NULL;
+  if (contact->context)
+    context_set_nick(contact->context, name);
 }
 
 const char*
@@ -127,9 +164,15 @@ GNUNET_CHAT_contact_get_name (const struct GNUNET_CHAT_Contact *contact)
   if (!contact)
     return NULL;
 
-  if (contact->nick)
-    return contact->nick;
+  if (!contact->context)
+    goto skip_context;
 
+  const char *nick = context_get_nick(contact->context);
+
+  if (nick)
+    return nick;
+
+skip_context:
   return GNUNET_MESSENGER_contact_get_name(contact->contact);
 }
 

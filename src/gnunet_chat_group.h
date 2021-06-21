@@ -31,12 +31,11 @@ struct GNUNET_CHAT_Group
 {
   struct GNUNET_CHAT_Handle *handle;
   struct GNUNET_CHAT_Context *context;
-
-  char *name;
 };
 
 struct GNUNET_CHAT_Group*
-group_create(struct GNUNET_CHAT_Handle *handle);
+group_create(struct GNUNET_CHAT_Handle *handle,
+	     const char *topic);
 
 void
 group_destroy(struct GNUNET_CHAT_Group* group);

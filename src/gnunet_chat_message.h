@@ -31,6 +31,7 @@
 
 struct GNUNET_CHAT_Message
 {
+  struct GNUNET_HashCode hash;
   struct GNUNET_MESSENGER_Message *message;
 };
 

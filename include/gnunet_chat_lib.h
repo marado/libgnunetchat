@@ -88,12 +88,24 @@ struct GNUNET_CHAT_File;
  *
  * @param cls
  * @param handle
+ * @param context
+ * @param reason
+ */
+typedef void
+(*GNUNET_CHAT_WarningCallback) (void *cls, struct GNUNET_CHAT_Handle *handle,
+				struct GNUNET_CHAT_Context *context, int reason);
+
+/**
+ * TODO
+ *
+ * @param cls
+ * @param handle
  * @param contact
  * @return
  */
 typedef int
 (*GNUNET_CHAT_ContactCallback) (void *cls, struct GNUNET_CHAT_Handle *handle,
-				const struct GNUNET_CHAT_Contact *contact);
+				struct GNUNET_CHAT_Contact *contact);
 
 /**
  * TODO
@@ -105,7 +117,7 @@ typedef int
  */
 typedef int
 (*GNUNET_CHAT_GroupCallback) (void *cls, struct GNUNET_CHAT_Handle *handle,
-			      const struct GNUNET_CHAT_Group *group);
+			      struct GNUNET_CHAT_Group *group);
 
 /**
  * TODO
@@ -117,7 +129,7 @@ typedef int
  */
 typedef int
 (*GNUNET_CHAT_GroupContactCallback) (void *cls, struct GNUNET_CHAT_Group *group,
-                                    const struct GNUNET_CHAT_Contact *contact);
+                                    struct GNUNET_CHAT_Contact *contact);
 
 /**
  * TODO
@@ -129,7 +141,7 @@ typedef int
  */
 typedef int
 (*GNUNET_CHAT_ContextMessageCallback) (void *cls, struct GNUNET_CHAT_Context *context,
-				       const struct GNUNET_CHAT_Message *message);
+				       struct GNUNET_CHAT_Message *message);
 
 /**
  * TODO
@@ -141,24 +153,26 @@ typedef int
  * @return
  */
 typedef int
-(*GNUNET_CHAT_MessageReadReceiptCallback) (void *cls, const struct GNUNET_CHAT_Message *message,
-					   const struct GNUNET_CHAT_Contact *contact,
+(*GNUNET_CHAT_MessageReadReceiptCallback) (void *cls, struct GNUNET_CHAT_Message *message,
+					   struct GNUNET_CHAT_Contact *contact,
 					   int read_receipt);
 
 typedef void
-(*GNUNET_CHAT_MessageFileDownloadCallback) (void *cls, const struct GNUNET_CHAT_File *file);
-
+(*GNUNET_CHAT_MessageFileDownloadCallback) (void *cls, struct GNUNET_CHAT_File *file);
 
 /**
  * TODO
  *
  * @param cfg
  * @param name
+ * @param warn_cb
+ * @param warn_cls
  * @return
  */
 struct GNUNET_CHAT_Handle*
 GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle *cfg,
-		   const char *name);
+		   const char *name,
+		   GNUNET_CHAT_WarningCallback warn_cb, void *warn_cls);
 
 /**
  * TODO
@@ -226,7 +240,8 @@ GNUNET_CHAT_iterate_contacts (struct GNUNET_CHAT_Handle *handle,
  * @return
  */
 struct GNUNET_CHAT_Group *
-GNUNET_CHAT_group_create (struct GNUNET_CHAT_Handle *handle);
+GNUNET_CHAT_group_create (struct GNUNET_CHAT_Handle *handle,
+			  const char* topic);
 
 /**
  * TODO
@@ -249,24 +264,6 @@ GNUNET_CHAT_iterate_groups (struct GNUNET_CHAT_Handle *handle,
  */
 int
 GNUNET_CHAT_contact_delete (struct GNUNET_CHAT_Contact *contact);
-
-/**
- * TODO
- *
- * @param contact
- */
-void
-GNUNET_CHAT_contact_set_blocking (struct GNUNET_CHAT_Contact *contact,
-				  int blocking);
-
-/**
- * TODO
- *
- * @param contact
- * @return
- */
-int
-GNUNET_CHAT_contact_is_blocking (const struct GNUNET_CHAT_Contact *contact);
 
 /**
  * TODO

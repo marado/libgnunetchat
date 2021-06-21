@@ -28,6 +28,7 @@
 
 struct GNUNET_CHAT_Context*
 context_create (struct GNUNET_CHAT_Handle *handle,
+		enum GNUNET_CHAT_ContextType type,
 		const struct GNUNET_HashCode *key)
 {
   struct GNUNET_MESSENGER_Handle *messenger = handle->handles.messenger;
@@ -60,7 +61,9 @@ context_create (struct GNUNET_CHAT_Handle *handle,
   context->handle = handle;
   context->room = room;
 
+  context->type = type;
   GNUNET_memcpy(&(context->key), room_key, sizeof(_room_key));
+  context->nick = NULL;
 
   return context;
 }
@@ -71,10 +74,32 @@ context_destroy (struct GNUNET_CHAT_Context* context)
   GNUNET_free(context);
 }
 
+enum GNUNET_CHAT_ContextType
+context_get_type (struct GNUNET_CHAT_Context* context)
+{
+  return context->type;
+}
+
 const struct GNUNET_HashCode*
 context_get_key (struct GNUNET_CHAT_Context* context)
 {
   return &(context->key);
+}
+
+const char*
+context_get_nick (struct GNUNET_CHAT_Context* context)
+{
+  return context->nick;
+}
+
+void
+context_set_nick (struct GNUNET_CHAT_Context* context,
+		  const char *nick)
+{
+  if (context->nick)
+    GNUNET_free(context->nick);
+
+  context->nick = nick? GNUNET_strdup(nick) : NULL;
 }
 
 void

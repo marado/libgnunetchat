@@ -6,6 +6,7 @@ INSTALL_DIR = /usr/local/
 LIBRARY = libgnunetchat.so
 SOURCES = gnunet_chat_handle.c\
 		  gnunet_chat_contact.c\
+		  gnunet_chat_file.c\
 		  gnunet_chat_group.c\
 		  gnunet_chat_context.c\
 		  gnunet_chat_message.c
