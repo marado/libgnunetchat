@@ -30,10 +30,7 @@
 #include <gnunet/gnunet_container_lib.h>
 #include <gnunet/gnunet_arm_service.h>
 #include <gnunet/gnunet_fs_service.h>
-#include <gnunet/gnunet_gns_service.h>
-#include <gnunet/gnunet_identity_service.h>
 #include <gnunet/gnunet_messenger_service.h>
-#include <gnunet/gnunet_reclaim_service.h>
 #include <gnunet/gnunet_regex_service.h>
 #include <gnunet/gnunet_util_lib.h>
 
@@ -53,31 +50,62 @@ struct GNUNET_CHAT_Handle
     struct GNUNET_FS_Handle *fs;
 
     /*
-     * required: (names can be resolved as well as zones and members)
-     */
-    struct GNUNET_GNS_Handle *gns;
-
-    /*
-     * optional: (if not anonymous to receive private key)
-     * (has to be reset as soon as the private key changes)
-     */
-    struct GNUNET_IDENTITY_Handle *identity;
-
-    /*
      * required!
      */
     struct GNUNET_MESSENGER_Handle *messenger;
-
-    /*
-     * feature/optional: (maybe add new reclaim message kind?)
-     * (the message would automatically issue the ticket)
-     * (send the ticket and consume it)
-     */
-    struct GNUNET_RECLAIM_Handle *reclaim;
   } handles;
 
-  struct GNUNET_CONTAINER_MultiHashMap *contacts;
+  struct {
+    struct GNUNET_CONTAINER_MultiShortmap *short_map;
+    struct GNUNET_CONTAINER_MultiHashMap *hash_map;
+  } contacts;
+
   struct GNUNET_CONTAINER_MultiHashMap *groups;
+  struct GNUNET_CONTAINER_MultiHashMap *contexts;
+  struct GNUNET_CONTAINER_MultiHashMap *files;
+
+  GNUNET_CHAT_ContextMessageCallback msg_cb;
+  void *msg_cls;
+
+  GNUNET_CHAT_WarningCallback warn_cb;
+  void *warn_cls;
 };
+
+int
+handle_update_chat_contact (struct GNUNET_CHAT_Handle *handle,
+			    struct GNUNET_CHAT_Contact *chatContact,
+			    int removeContact);
+
+int
+handle_update_chat_group (struct GNUNET_CHAT_Handle *handle,
+			  struct GNUNET_CHAT_Group *chatGroup,
+			  int removeGroup);
+
+int
+handle_update_chat_context (struct GNUNET_CHAT_Handle *handle,
+			    struct GNUNET_CHAT_Context *context,
+			    int removeContext);
+
+int
+handle_update_chat_file (struct GNUNET_CHAT_Handle *handle,
+			 struct GNUNET_CHAT_File *file,
+			 int removeFile);
+
+struct GNUNET_CHAT_Contact*
+handle_get_chat_contact (struct GNUNET_CHAT_Handle *handle,
+			 const struct GNUNET_MESSENGER_Contact *contact);
+
+void
+handle_set_chat_contact (struct GNUNET_CHAT_Handle *handle,
+			 const struct GNUNET_MESSENGER_Contact *contact,
+			 struct GNUNET_CHAT_Contact *chatContact);
+
+struct GNUNET_CHAT_Context*
+handle_get_chat_context (struct GNUNET_CHAT_Handle *handle,
+			 const struct GNUNET_HashCode *key);
+
+struct GNUNET_CHAT_File*
+handle_get_chat_file (struct GNUNET_CHAT_Handle *handle,
+		      const struct GNUNET_HashCode *hash);
 
 #endif /* GNUNET_CHAT_HANDLE_H_ */

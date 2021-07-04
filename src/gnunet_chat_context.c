@@ -165,12 +165,14 @@ GNUNET_CHAT_context_delete_message (struct GNUNET_CHAT_Context *context,
   GNUNET_MESSENGER_send_message(context->room, &message, NULL);
 }
 
-const struct GNUNET_CHAT_Message*
+int
 GNUNET_CHAT_context_get_message (struct GNUNET_CHAT_Context *context,
-				 const struct GNUNET_HashCode *hash)
+				 const struct GNUNET_HashCode *hash,
+				 GNUNET_CHAT_ContextMessageCallback callback,
+				 void *cls)
 {
   if (!context)
-    return NULL;
+    return GNUNET_SYSERR;
 
   struct GNUNET_MESSENGER_Message *message = GNUNET_MESSENGER_get_message(
       context->room, hash
@@ -178,7 +180,7 @@ GNUNET_CHAT_context_get_message (struct GNUNET_CHAT_Context *context,
 
   //TODO: convert messenger-message to chat-message
 
-  return NULL;
+  return GNUNET_OK;
 }
 
 int

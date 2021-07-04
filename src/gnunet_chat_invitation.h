@@ -19,20 +19,17 @@
  */
 /*
  * @author Tobias Frisch
- * @file gnunet_chat_message.h
+ * @file gnunet_chat_invitation.h
  */
 
-#ifndef GNUNET_CHAT_MESSAGE_H_
-#define GNUNET_CHAT_MESSAGE_H_
+#ifndef GNUNET_CHAT_INVITATION_H_
+#define GNUNET_CHAT_INVITATION_H_
 
-#include <gnunet/platform.h>
-#include <gnunet/gnunet_messenger_service.h>
-#include <gnunet/gnunet_util_lib.h>
+#include "gnunet_chat_lib.h"
 
-struct GNUNET_CHAT_Message
+struct GNUNET_CHAT_Invitation
 {
-  struct GNUNET_HashCode hash;
-  const struct GNUNET_MESSENGER_Message *message;
+
 };
 
-#endif /* GNUNET_CHAT_MESSAGE_H_ */
+#endif /* GNUNET_CHAT_INVITATION_H_ */

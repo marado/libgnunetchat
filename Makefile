@@ -7,9 +7,11 @@ LIBRARY = libgnunetchat.so
 SOURCES = gnunet_chat_handle.c\
 		  gnunet_chat_contact.c\
 		  gnunet_chat_file.c\
+		  gnunet_chat_invitation.c\
 		  gnunet_chat_group.c\
 		  gnunet_chat_context.c\
-		  gnunet_chat_message.c
+		  gnunet_chat_message.c\
+		  gnunet_chat_config.c
 HEADERS = gnunet_chat_lib.h
 
 LIBRARIES = gnunetarm\

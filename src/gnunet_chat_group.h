@@ -25,12 +25,19 @@
 #ifndef GNUNET_CHAT_GROUP_H_
 #define GNUNET_CHAT_GROUP_H_
 
+#include <gnunet/gnunet_regex_service.h>
+
 #include "gnunet_chat_context.h"
 
 struct GNUNET_CHAT_Group
 {
   struct GNUNET_CHAT_Handle *handle;
   struct GNUNET_CHAT_Context *context;
+
+  int is_public;
+
+  struct GNUNET_REGEX_Announcement *announcement;
+  struct GNUNET_REGEX_Search *search;
 };
 
 struct GNUNET_CHAT_Group*

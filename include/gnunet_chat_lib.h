@@ -29,6 +29,8 @@
 #ifndef GNUNET_CHAT_LIB_H_
 #define GNUNET_CHAT_LIB_H_
 
+#define GNUNET_UNUSED __attribute__ ((unused))
+
 #include <gnunet/platform.h>
 #include <gnunet/gnunet_util_lib.h>
 
@@ -40,17 +42,22 @@ enum GNUNET_CHAT_MessageKind
   /**
    * TODO
    */
-  GNUNET_CHAT_KIND_TEXT = 1,  /**< GNUNET_CHAT_KIND_TEXT */
+  GNUNET_CHAT_KIND_TEXT = 1,       /**< GNUNET_CHAT_KIND_TEXT */
 
   /**
    * TODO
    */
-  GNUNET_CHAT_KIND_FILE = 2,  /**< GNUNET_CHAT_KIND_FILE */
+  GNUNET_CHAT_KIND_FILE = 2,       /**< GNUNET_CHAT_KIND_FILE */
 
   /**
    * TODO
    */
-  GNUNET_CHAT_KIND_UNKNOWN = 0/**< GNUNET_CHAT_KIND_UNKNOWN */
+  GNUNET_CHAT_KIND_INVITATION = 3, /**< GNUNET_CHAT_KIND_INVITATION */
+
+  /**
+   * TODO
+   */
+  GNUNET_CHAT_KIND_UNKNOWN = 0     /**< GNUNET_CHAT_KIND_UNKNOWN */
 };
 
 /**
@@ -82,6 +89,11 @@ struct GNUNET_CHAT_Message;
  * TODO
  */
 struct GNUNET_CHAT_File;
+
+/**
+ * TODO
+ */
+struct GNUNET_CHAT_Invitation;
 
 /**
  * TODO
@@ -157,8 +169,27 @@ typedef int
 					   struct GNUNET_CHAT_Contact *contact,
 					   int read_receipt);
 
-typedef void
-(*GNUNET_CHAT_MessageFileDownloadCallback) (void *cls, struct GNUNET_CHAT_File *file);
+/**
+ * TODO
+ *
+ * @param cls
+ * @param file
+ * @param completed
+ */
+typedef int
+(*GNUNET_CHAT_MessageFileUploadCallback) (void *cls, const struct GNUNET_CHAT_File *file,
+					  uint64_t completed);
+
+/**
+ * TODO
+ *
+ * @param cls
+ * @param file
+ * @param completed
+ */
+typedef int
+(*GNUNET_CHAT_MessageFileDownloadCallback) (void *cls, struct GNUNET_CHAT_File *file,
+					    uint64_t completed);
 
 /**
  * TODO
@@ -172,7 +203,8 @@ typedef void
 struct GNUNET_CHAT_Handle*
 GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle *cfg,
 		   const char *name,
-		   GNUNET_CHAT_WarningCallback warn_cb, void *warn_cls);
+		   GNUNET_CHAT_WarningCallback warn_cb, void *warn_cls,
+		   GNUNET_CHAT_ContextMessageCallback msg_cb, void *msg_cls);
 
 /**
  * TODO
@@ -306,8 +338,9 @@ GNUNET_CHAT_contact_get_context (struct GNUNET_CHAT_Contact *contact);
  * TODO
  *
  * @param group
+ * @return
  */
-void
+int
 GNUNET_CHAT_group_leave (struct GNUNET_CHAT_Group *group);
 
 /**
@@ -418,11 +451,15 @@ GNUNET_CHAT_context_delete_message (struct GNUNET_CHAT_Context *context,
  *
  * @param context
  * @param hash
+ * @param callback
+ * @param cls
  * @return
  */
-const struct GNUNET_CHAT_Message*
+int
 GNUNET_CHAT_context_get_message (struct GNUNET_CHAT_Context *context,
-				 const struct GNUNET_HashCode *hash);
+				 const struct GNUNET_HashCode *hash,
+				 GNUNET_CHAT_ContextMessageCallback callback,
+				 void *cls);
 
 /**
  * TODO
@@ -499,33 +536,91 @@ GNUNET_CHAT_message_get_file (const struct GNUNET_CHAT_Message *message);
 /**
  * TODO
  *
- * @param file
+ * @param message
+ * @return
  */
-void
-GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file);
+struct GNUNET_CHAT_Invitation*
+GNUNET_CHAT_message_get_invitation (const struct GNUNET_CHAT_Message *message);
 
 /**
  * TODO
  *
  * @param file
+ * @return
  */
-void
+const struct GNUNET_HashCode*
+GNUNET_CHAT_file_get_hash (const struct GNUNET_CHAT_File *file);
+
+/**
+ * TODO
+ *
+ * @param file
+ * @return
+ */
+uint64_t
+GNUNET_CHAT_file_get_size (const struct GNUNET_CHAT_File *file);
+
+/**
+ * TODO
+ *
+ * @param file
+ * @return
+ */
+int
+GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file);
+
+/**
+ * TODO
+ *
+ * @param file
+ * @return
+ */
+int
+GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
+				 GNUNET_CHAT_MessageFileDownloadCallback callback,
+				 void *cls);
+
+/**
+ * TODO
+ *
+ * @param file
+ * @return
+ */
+int
 GNUNET_CHAT_file_pause_download (struct GNUNET_CHAT_File *file);
 
 /**
  * TODO
  *
  * @param file
+ * @return
  */
-void
+int
 GNUNET_CHAT_file_resume_download (struct GNUNET_CHAT_File *file);
 
 /**
  * TODO
  *
  * @param file
+ * @return
+ */
+int
+GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file);
+
+/**
+ * TODO
+ *
+ * @param invitation
  */
 void
-GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file);
+GNUNET_CHAT_invitation_accept (struct GNUNET_CHAT_Invitation *invitation);
+
+/**
+ * TODO
+ *
+ * @param invitation
+ */
+void
+GNUNET_CHAT_invitation_decline (struct GNUNET_CHAT_Invitation *invitation);
 
 #endif /* GNUNET_CHAT_LIB_H_ */

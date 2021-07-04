@@ -140,6 +140,10 @@ GNUNET_CHAT_contact_delete (struct GNUNET_CHAT_Contact *contact)
   if (!contact)
     return GNUNET_SYSERR;
 
+  if (GNUNET_YES != handle_update_chat_contact(contact->handle,
+					       contact, GNUNET_YES))
+    return GNUNET_SYSERR;
+
   if (contact->context)
     GNUNET_MESSENGER_close_room(contact->context->room);
 

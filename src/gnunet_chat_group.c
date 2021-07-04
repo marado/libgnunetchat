@@ -46,6 +46,10 @@ group_create(struct GNUNET_CHAT_Handle *handle,
       topic? &topic_key : NULL
   );
 
+  group->is_public = topic? GNUNET_YES : GNUNET_NO;
+  group->announcement = NULL;
+  group->search = NULL;
+
   if (!group->context)
   {
     group_destroy (group);
@@ -90,16 +94,20 @@ skip_context:
   GNUNET_free(group);
 }
 
-void
+int
 GNUNET_CHAT_group_leave (struct GNUNET_CHAT_Group *group)
 {
   if (!group)
-    return;
+    return GNUNET_SYSERR;
+
+  if (GNUNET_YES != handle_update_chat_group(group->handle, group, GNUNET_YES))
+    return GNUNET_SYSERR;
 
   if (group->context)
     GNUNET_MESSENGER_close_room(group->context->room);
 
   group_destroy(group);
+  return GNUNET_OK;
 }
 
 void

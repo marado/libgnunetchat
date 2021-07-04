@@ -25,11 +25,31 @@
 #include "gnunet_chat_lib.h"
 #include "gnunet_chat_file.h"
 
-void
-GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file)
+const struct GNUNET_HashCode*
+GNUNET_CHAT_file_get_hash (const struct GNUNET_CHAT_File *file)
+{
+  return &(file->hash);
+}
+
+uint64_t
+GNUNET_CHAT_file_get_size (const struct GNUNET_CHAT_File *file)
+{
+  return 0;
+}
+
+int
+GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file)
+{
+  return GNUNET_NO;
+}
+
+int
+GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
+				 GNUNET_CHAT_MessageFileDownloadCallback callback,
+				 void *cls)
 {
   if (!file)
-    return;
+    return GNUNET_SYSERR;
 
   struct GNUNET_FS_Handle *handle;
   const char *path = ""; // TODO: path = download_directory + filename
@@ -47,31 +67,36 @@ GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file)
       NULL,
       NULL
   );
+
+  return GNUNET_OK;
 }
 
-void
+int
 GNUNET_CHAT_file_pause_download (struct GNUNET_CHAT_File *file)
 {
   if (!file)
-    return;
+    return GNUNET_SYSERR;
 
   GNUNET_FS_download_suspend(file->context);
+  return GNUNET_OK;
 }
 
-void
+int
 GNUNET_CHAT_file_resume_download (struct GNUNET_CHAT_File *file)
 {
   if (!file)
-    return;
+    return GNUNET_SYSERR;
 
   GNUNET_FS_download_resume(file->context);
+  return GNUNET_OK;
 }
 
-void
+int
 GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file)
 {
   if (!file)
-    return;
+    return GNUNET_SYSERR;
 
   GNUNET_FS_download_stop(file->context, GNUNET_YES);
+  return GNUNET_OK;
 }
