@@ -194,6 +194,7 @@ typedef int
  * TODO
  *
  * @param cfg
+ * @param directory
  * @param name
  * @param warn_cb
  * @param warn_cls
@@ -201,6 +202,7 @@ typedef int
  */
 struct GNUNET_CHAT_Handle*
 GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle *cfg,
+		   const char *directory,
 		   const char *name,
 		   GNUNET_CHAT_WarningCallback warn_cb, void *warn_cls,
 		   GNUNET_CHAT_ContextMessageCallback msg_cb, void *msg_cls);
@@ -398,8 +400,9 @@ GNUNET_CHAT_group_get_context (struct GNUNET_CHAT_Group *group);
  *
  * @param context
  * @param text
+ * @return
  */
-void
+int
 GNUNET_CHAT_context_send_text (struct GNUNET_CHAT_Context *context,
 			       const char *text);
 
@@ -408,8 +411,9 @@ GNUNET_CHAT_context_send_text (struct GNUNET_CHAT_Context *context,
  *
  * @param context
  * @param path
+ * @return
  */
-void
+int
 GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
 			       const char *path);
 
@@ -418,8 +422,9 @@ GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
  *
  * @param context
  * @param uri
+ * @return
  */
-void
+int
 GNUNET_CHAT_context_send_uri (struct GNUNET_CHAT_Context *context,
 			      const char *uri);
 
@@ -428,21 +433,11 @@ GNUNET_CHAT_context_send_uri (struct GNUNET_CHAT_Context *context,
  *
  * @param context
  * @param file
+ * @return
  */
-void
+int
 GNUNET_CHAT_context_share_file (struct GNUNET_CHAT_Context *context,
 				const struct GNUNET_CHAT_File *file);
-
-/**
- * TODO
- *
- * @param context
- * @param hash
- * @param delay
- */
-void
-GNUNET_CHAT_context_delete_message (const struct GNUNET_CHAT_Message *message,
-				    struct GNUNET_TIME_Relative delay);
 
 /**
  * TODO
@@ -528,6 +523,17 @@ GNUNET_CHAT_message_get_invitation (const struct GNUNET_CHAT_Message *message);
 /**
  * TODO
  *
+ * @param message
+ * @param delay
+ * @return
+ */
+int
+GNUNET_CHAT_message_delete (const struct GNUNET_CHAT_Message *message,
+			    struct GNUNET_TIME_Relative delay);
+
+/**
+ * TODO
+ *
  * @param file
  * @return
  */
@@ -589,6 +595,15 @@ GNUNET_CHAT_file_resume_download (struct GNUNET_CHAT_File *file);
  */
 int
 GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file);
+
+/**
+ * TODO
+ *
+ * @param file
+ * @return
+ */
+int
+GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file);
 
 /**
  * TODO

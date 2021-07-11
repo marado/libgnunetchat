@@ -24,8 +24,10 @@
 
 #include "gnunet_chat_contact.h"
 #include "gnunet_chat_context.h"
+#include "gnunet_chat_file.h"
 #include "gnunet_chat_group.h"
 #include "gnunet_chat_handle.h"
+#include "gnunet_chat_invitation.h"
 #include "gnunet_chat_message.h"
 #include "gnunet_chat_util.h"
 
@@ -67,79 +69,70 @@ notify_handle_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info)
 
   switch (info->status) {
     case GNUNET_FS_STATUS_PUBLISH_START: {
-      /*publication_t* publication = (publication_t*) info->value.publish.cctx;
-      publication->progress = 0.0f;
+      struct GNUNET_CHAT_File *file = info->value.publish.cctx;
 
-      GNUNET_SCHEDULER_add_now(&CGTK_publication_progress, publication);
+      file->published = 0;
 
-      return publication;*/
-      break;
+      return file;
     } case GNUNET_FS_STATUS_PUBLISH_PROGRESS: {
-      /*publication_t* publication = (publication_t*) info->value.publish.cctx;
-      publication->progress = 1.0f * info->value.publish.completed / info->value.publish.size;
+      struct GNUNET_CHAT_File *file = info->value.publish.cctx;
 
-      GNUNET_SCHEDULER_add_now(&CGTK_publication_progress, publication);
+      file->published = info->value.publish.completed;
 
-      return publication;*/
-      break;
+      return file;
     } case GNUNET_FS_STATUS_PUBLISH_COMPLETED: {
-      /*publication_t* publication = (publication_t*) info->value.publish.cctx;
-      publication->uri = GNUNET_FS_uri_dup(info->value.publish.specifics.completed.chk_uri);
-      publication->progress = 1.0f;
+      struct GNUNET_CHAT_File *file = info->value.publish.cctx;
 
-      GNUNET_SCHEDULER_add_now(&CGTK_publication_finish, publication);*/
+      file->uri = GNUNET_FS_uri_dup(
+	  info->value.publish.specifics.completed.chk_uri
+      );
+
+      file->published = info->value.publish.size;
+      file->publish = NULL;
       break;
     } case GNUNET_FS_STATUS_PUBLISH_ERROR: {
-      /*publication_t* publication = (publication_t*) info->value.publish.cctx;
-
-      GNUNET_SCHEDULER_add_now(&CGTK_publication_error, publication);*/
       break;
     } case GNUNET_FS_STATUS_DOWNLOAD_START: {
-      /*request_t* request = (request_t*) info->value.download.cctx;
-      request->progress = 0.0f;
+      struct GNUNET_CHAT_File *file = info->value.download.cctx;
 
-      return request;*/
-      break;
+      file->downloaded = 0;
+
+      return file;
     } case GNUNET_FS_STATUS_DOWNLOAD_ACTIVE: {
       return info->value.download.cctx;
     } case GNUNET_FS_STATUS_DOWNLOAD_INACTIVE: {
       return info->value.download.cctx;
     } case GNUNET_FS_STATUS_DOWNLOAD_PROGRESS: {
-      /*request_t* request = (request_t*) info->value.download.cctx;
-      request->progress = 1.0f * info->value.download.completed / info->value.download.size;
+      struct GNUNET_CHAT_File *file = info->value.download.cctx;
 
-      GNUNET_SCHEDULER_add_now(&CGTK_request_progress, request);
+      file->downloaded = info->value.download.completed;
 
-      return request;*/
-      break;
+      return file;
     } case GNUNET_FS_STATUS_DOWNLOAD_COMPLETED: {
-      /*request_t* request = (request_t*) info->value.download.cctx;
-      request->progress = 1.0f;
+      struct GNUNET_CHAT_File *file = info->value.download.cctx;
 
-      GNUNET_SCHEDULER_add_now(&CGTK_request_finish, request);*/
+      file->downloaded = info->value.download.size;
+      file->download = NULL;
       break;
     } case GNUNET_FS_STATUS_DOWNLOAD_ERROR: {
-      /*request_t *request = (request_t *) info->value.download.cctx;
-
-      GNUNET_SCHEDULER_add_now(&CGTK_request_error, request);*/
       break;
     } case GNUNET_FS_STATUS_UNINDEX_START: {
-      /*publication_t* publication = (publication_t*) info->value.unindex.cctx;
-      publication->progress = 0.0f;
+      struct GNUNET_CHAT_File *file = info->value.unindex.cctx;
 
-      return publication;*/
-      break;
+      file->unindexed = 0;
+
+      return file;
     } case GNUNET_FS_STATUS_UNINDEX_PROGRESS: {
-      /*publication_t* publication = (publication_t*) info->value.unindex.cctx;
-      publication->progress = 1.0f * info->value.unindex.completed / info->value.unindex.size;
+      struct GNUNET_CHAT_File *file = info->value.unindex.cctx;
 
-      return publication;*/
-      break;
+      file->unindexed = info->value.unindex.completed;
+
+      return file;
     } case GNUNET_FS_STATUS_UNINDEX_COMPLETED: {
-      /*publication_t* publication = (publication_t*) info->value.unindex.cctx;
-      publication->progress = 1.0f;
+      struct GNUNET_CHAT_File *file = info->value.unindex.cctx;
 
-      GNUNET_SCHEDULER_add_now(&CGTK_publication_unindex_finish, publication);*/
+      file->unindexed = info->value.unindex.size;
+      file->unindex = NULL;
       break;
     } default: {
       break;
@@ -290,9 +283,44 @@ on_handle_message (void *cls,
   );
 
   if (message)
-    goto process_callback;
+    return;
 
   message = message_create_from_msg(context, hash, msg);
+
+  switch (msg->header.kind)
+  {
+    case GNUNET_MESSENGER_KIND_INVITE:
+    {
+      struct GNUNET_CHAT_Invitation *invitation = invitation_create_from_message(
+	  context, &(msg->body.invite)
+      );
+
+      if (GNUNET_OK != GNUNET_CONTAINER_multihashmap_put(
+	  context->invites, hash, invitation,
+	  GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
+	invitation_destroy(invitation);
+      break;
+    }
+    case GNUNET_MESSENGER_KIND_FILE:
+    {
+      GNUNET_CONTAINER_multihashmap_put(
+	    context->files, hash, NULL,
+	    GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST
+      );
+
+      struct GNUNET_CHAT_File *file = file_create_from_message(
+	  context->handle, &(msg->body.file)
+      );
+
+      if (GNUNET_OK != GNUNET_CONTAINER_multihashmap_put(
+	  context->handle->files, &(file->hash), file,
+	  GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
+	file_destroy(file);
+      break;
+    }
+    default:
+      break;
+  }
 
   if (GNUNET_OK != GNUNET_CONTAINER_multihashmap_put(
       context->messages, hash, message,
@@ -302,7 +330,46 @@ on_handle_message (void *cls,
     return;
   }
 
-process_callback:
   if (handle->msg_cb)
     handle->msg_cb(handle->msg_cls, context, message);
+}
+
+int
+it_destroy_handle_groups (GNUNET_UNUSED void *cls,
+			  GNUNET_UNUSED const struct GNUNET_HashCode *key,
+			  void *value)
+{
+  struct GNUNET_CHAT_Group *group = value;
+  group_destroy(group);
+  return GNUNET_YES;
+}
+
+int
+it_destroy_handle_contacts (GNUNET_UNUSED void *cls,
+			    GNUNET_UNUSED const struct GNUNET_ShortHashCode *key,
+			    void *value)
+{
+  struct GNUNET_CHAT_Contact *contact = value;
+  contact_destroy(contact);
+  return GNUNET_YES;
+}
+
+int
+it_destroy_handle_contexts (GNUNET_UNUSED void *cls,
+			    GNUNET_UNUSED const struct GNUNET_HashCode *key,
+			    void *value)
+{
+  struct GNUNET_CHAT_Context *context = value;
+  context_destroy(context);
+  return GNUNET_YES;
+}
+
+int
+it_destroy_handle_files (GNUNET_UNUSED void *cls,
+			 GNUNET_UNUSED const struct GNUNET_HashCode *key,
+			 void *value)
+{
+  struct GNUNET_CHAT_File *file = value;
+  file_destroy(file);
+  return GNUNET_YES;
 }

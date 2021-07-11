@@ -26,14 +26,14 @@
 
 void
 util_shorthash_from_member (const struct GNUNET_MESSENGER_Contact *member,
-			    struct GNUNET_ShortHashCode* shorthash)
+			    struct GNUNET_ShortHashCode *shorthash)
 {
   memset(shorthash, 0, sizeof(*shorthash));
   GNUNET_memcpy(shorthash, &member, sizeof(member));
 }
 
 void
-util_set_name_field (const char *name, char** field)
+util_set_name_field (const char *name, char **field)
 {
   if (*field)
     GNUNET_free(*field);
@@ -42,4 +42,148 @@ util_set_name_field (const char *name, char** field)
     *field = GNUNET_strdup(name);
   else
     *field = NULL;
+}
+
+int
+util_hash_file (const char *filename, struct GNUNET_HashCode *hash)
+{
+  uint64_t size;
+
+  if (GNUNET_OK != GNUNET_DISK_file_size(filename, &size, GNUNET_NO, GNUNET_YES))
+    return GNUNET_SYSERR;
+
+  struct GNUNET_DISK_FileHandle *file = GNUNET_DISK_file_open(
+      filename, GNUNET_DISK_OPEN_READ, GNUNET_DISK_PERM_USER_READ
+  );
+
+  if (!file)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_DISK_MapHandle *mapping;
+  const void* data = GNUNET_DISK_file_map(
+      file, &mapping, GNUNET_DISK_MAP_TYPE_READ, size
+  );
+
+  if (!data)
+  {
+    GNUNET_DISK_file_close(file);
+    return GNUNET_SYSERR;
+  }
+
+  GNUNET_CRYPTO_hash(data, size, hash);
+
+  GNUNET_DISK_file_unmap(mapping);
+  GNUNET_DISK_file_close(file);
+
+  return GNUNET_OK;
+}
+
+int
+util_encrypt_file (const char *filename,
+		   const struct GNUNET_CRYPTO_SymmetricSessionKey *key)
+{
+  uint64_t size;
+
+  if (GNUNET_OK != GNUNET_DISK_file_size(filename, &size, GNUNET_NO, GNUNET_YES))
+    return GNUNET_SYSERR;
+
+  struct GNUNET_DISK_FileHandle *file = GNUNET_DISK_file_open(
+      filename, GNUNET_DISK_OPEN_READWRITE,
+      GNUNET_DISK_PERM_USER_READ | GNUNET_DISK_PERM_USER_WRITE
+  );
+
+  if (!file)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_DISK_MapHandle *mapping;
+  void* data = GNUNET_DISK_file_map(
+      file, &mapping, GNUNET_DISK_MAP_TYPE_READWRITE, size
+  );
+
+  if (!data)
+  {
+    GNUNET_DISK_file_close(file);
+    return GNUNET_SYSERR;
+  }
+
+  struct GNUNET_CRYPTO_SymmetricInitializationVector iv;
+  memset(&iv, 0, sizeof(iv));
+
+  ssize_t result = GNUNET_CRYPTO_symmetric_encrypt(data, size, key, &iv, data);
+
+  if (GNUNET_OK != GNUNET_DISK_file_unmap(mapping))
+    result = -1;
+
+  if (GNUNET_OK != GNUNET_DISK_file_sync(file))
+    result = -1;
+
+  if (GNUNET_OK != GNUNET_DISK_file_close(file))
+    result = -1;
+
+  if (result < 0)
+    return GNUNET_SYSERR;
+
+  return GNUNET_OK;
+}
+
+int
+util_decrypt_file (const char *filename,
+		   const struct GNUNET_CRYPTO_SymmetricSessionKey *key)
+{
+  uint64_t size;
+
+  if (GNUNET_OK != GNUNET_DISK_file_size(filename, &size, GNUNET_NO, GNUNET_YES))
+    return GNUNET_SYSERR;
+
+  struct GNUNET_DISK_FileHandle *file = GNUNET_DISK_file_open(
+      filename, GNUNET_DISK_OPEN_READWRITE,
+      GNUNET_DISK_PERM_USER_READ | GNUNET_DISK_PERM_USER_WRITE
+  );
+
+  if (!file)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_DISK_MapHandle *mapping;
+  void* data = GNUNET_DISK_file_map(
+      file, &mapping, GNUNET_DISK_MAP_TYPE_READWRITE, size
+  );
+
+  if (!data)
+  {
+    GNUNET_DISK_file_close(file);
+    return GNUNET_SYSERR;
+  }
+
+  struct GNUNET_CRYPTO_SymmetricInitializationVector iv;
+  memset(&iv, 0, sizeof(iv));
+
+  ssize_t result = GNUNET_CRYPTO_symmetric_decrypt(data, size, key, &iv, data);
+
+  if (GNUNET_OK != GNUNET_DISK_file_unmap(mapping))
+    result = -1;
+
+  if (GNUNET_OK != GNUNET_DISK_file_sync(file))
+    result = -1;
+
+  if (GNUNET_OK != GNUNET_DISK_file_close(file))
+    result = -1;
+
+  if (result < 0)
+    return GNUNET_SYSERR;
+
+  return GNUNET_OK;
+}
+
+int
+util_get_filename (const char *directory, const struct GNUNET_HashCode *hash,
+		   char **filename)
+{
+  return GNUNET_asprintf (
+      filename,
+      "%s%s%c%s",
+      directory,
+      "files",
+      DIR_SEPARATOR,
+      GNUNET_h2s_full(hash)
+  );
 }

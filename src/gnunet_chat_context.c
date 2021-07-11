@@ -24,6 +24,8 @@
 
 #include "gnunet_chat_context.h"
 
+#include "gnunet_chat_context_intern.c"
+
 struct GNUNET_CHAT_Context*
 context_create_from_room (struct GNUNET_CHAT_Handle *handle,
 			  struct GNUNET_MESSENGER_Room *room)
@@ -47,6 +49,14 @@ context_create_from_room (struct GNUNET_CHAT_Handle *handle,
 void
 context_destroy (struct GNUNET_CHAT_Context* context)
 {
+  GNUNET_CONTAINER_multihashmap_iterate(
+      context->messages, it_destroy_context_messages, NULL
+  );
+
+  GNUNET_CONTAINER_multihashmap_iterate(
+      context->messages, it_destroy_context_invites, NULL
+  );
+
   GNUNET_CONTAINER_multihashmap_destroy(context->messages);
   GNUNET_CONTAINER_multihashmap_destroy(context->invites);
   GNUNET_CONTAINER_multihashmap_destroy(context->files);

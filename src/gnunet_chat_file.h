@@ -43,6 +43,12 @@ struct GNUNET_CHAT_File
   struct GNUNET_HashCode hash;
   struct GNUNET_CRYPTO_SymmetricSessionKey key;
 
+  uint64_t published;
+  uint64_t downloaded;
+  uint64_t unindexed;
+
+  struct GNUNET_CONTAINER_MetaData *meta;
+
   struct GNUNET_FS_Uri* uri;
   struct GNUNET_FS_DownloadContext* download;
   struct GNUNET_FS_PublishContext* publish;
@@ -52,6 +58,11 @@ struct GNUNET_CHAT_File
 struct GNUNET_CHAT_File*
 file_create_from_message (struct GNUNET_CHAT_Handle *handle,
 			  const struct GNUNET_MESSENGER_MessageFile* message);
+
+struct GNUNET_CHAT_File*
+file_create_from_disk (struct GNUNET_CHAT_Handle *handle,
+		       const char *name, const struct GNUNET_HashCode *hash,
+		       const struct GNUNET_CRYPTO_SymmetricSessionKey *key);
 
 void
 file_destroy (struct GNUNET_CHAT_File* file);

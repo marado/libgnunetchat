@@ -28,7 +28,8 @@
 
 struct GNUNET_CHAT_Handle*
 handle_create_from_config (const struct GNUNET_CONFIGURATION_Handle* cfg,
-			   const char* name,
+			   const char *directory,
+			   const char *name,
 			   GNUNET_CHAT_ContextMessageCallback msg_cb,
 			   void *msg_cls,
 			   GNUNET_CHAT_WarningCallback warn_cb,
@@ -37,6 +38,12 @@ handle_create_from_config (const struct GNUNET_CONFIGURATION_Handle* cfg,
   struct GNUNET_CHAT_Handle* handle = GNUNET_new(struct GNUNET_CHAT_Handle);
 
   handle->cfg = cfg;
+
+  if ((directory) &&
+      (GNUNET_YES == GNUNET_DISK_directory_test(directory, GNUNET_YES)))
+    handle->directory = GNUNET_strdup(directory);
+  else
+    handle->directory = NULL;
 
   handle->msg_cb = msg_cb;
   handle->msg_cls = msg_cls;
@@ -58,7 +65,7 @@ handle_create_from_config (const struct GNUNET_CONFIGURATION_Handle* cfg,
     on_handle_arm_connection(handle, GNUNET_NO);
 
   handle->fs = GNUNET_FS_start(
-      handle->cfg, name, // TODO: raw name?
+      handle->cfg, name, // TODO: raw name? (NULL?)
       notify_handle_fs_progress, handle,
       GNUNET_FS_FLAGS_NONE,
       GNUNET_FS_OPTIONS_END
@@ -85,10 +92,29 @@ handle_destroy (struct GNUNET_CHAT_Handle* handle)
   if (handle->arm)
     GNUNET_ARM_disconnect(handle->arm);
 
+  GNUNET_CONTAINER_multihashmap_iterate(
+      handle->groups, it_destroy_handle_groups, NULL
+  );
+
+  GNUNET_CONTAINER_multishortmap_iterate(
+      handle->contacts, it_destroy_handle_contacts, NULL
+  );
+
+  GNUNET_CONTAINER_multihashmap_iterate(
+      handle->contexts, it_destroy_handle_contexts, NULL
+  );
+
+  GNUNET_CONTAINER_multihashmap_iterate(
+      handle->files, it_destroy_handle_files, NULL
+  );
+
   GNUNET_CONTAINER_multihashmap_destroy(handle->groups);
   GNUNET_CONTAINER_multishortmap_destroy(handle->contacts);
   GNUNET_CONTAINER_multihashmap_destroy(handle->contexts);
   GNUNET_CONTAINER_multihashmap_destroy(handle->files);
+
+  if (handle->directory)
+    GNUNET_free(handle->directory);
 
   GNUNET_free(handle);
 }

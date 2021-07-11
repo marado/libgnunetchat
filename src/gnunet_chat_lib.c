@@ -40,6 +40,7 @@
 
 struct GNUNET_CHAT_Handle*
 GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle *cfg,
+		   const char *directory,
 		   const char *name,
 		   GNUNET_CHAT_WarningCallback warn_cb, void *warn_cls,
 		   GNUNET_CHAT_ContextMessageCallback msg_cb, void *msg_cls)
@@ -47,11 +48,10 @@ GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle *cfg,
   if (!cfg)
     return NULL;
 
-  if (!name)
-    return NULL;
-
   return handle_create_from_config(
-      cfg, name, msg_cb, msg_cls, warn_cb, warn_cls
+      cfg, directory, name,
+      msg_cb, msg_cls,
+      warn_cb, warn_cls
   );
 }
 
@@ -332,6 +332,7 @@ GNUNET_CHAT_group_invite_contact (struct GNUNET_CHAT_Group *group,
   GNUNET_MESSENGER_send_message(contact->context->room, &msg, contact->member);
 }
 
+
 int
 GNUNET_CHAT_group_iterate_contacts (struct GNUNET_CHAT_Group *group,
 				    GNUNET_CHAT_GroupContactCallback callback,
@@ -360,12 +361,13 @@ GNUNET_CHAT_group_get_context (struct GNUNET_CHAT_Group *group)
   return group->context;
 }
 
-void
+
+int
 GNUNET_CHAT_context_send_text (struct GNUNET_CHAT_Context *context,
 			       const char *text)
 {
   if ((!context) || (!text))
-    return;
+    return GNUNET_SYSERR;
 
   struct GNUNET_MESSENGER_Message msg;
   msg.header.kind = GNUNET_MESSENGER_KIND_TEXT;
@@ -374,42 +376,109 @@ GNUNET_CHAT_context_send_text (struct GNUNET_CHAT_Context *context,
   GNUNET_MESSENGER_send_message(context->room, &msg, NULL);
 
   GNUNET_free(msg.body.text.text);
+  return GNUNET_OK;
 }
 
 
-void
+int
 GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
 			       const char *path)
 {
   if ((!context) || (!path))
-    return;
+    return GNUNET_SYSERR;
 
-  // TODO: encrypt file, publish file, share file
+  if (!(context->handle->directory))
+    return GNUNET_SYSERR;
+
+  struct GNUNET_HashCode hash;
+  if (GNUNET_OK != util_hash_file(path, &hash))
+    return GNUNET_SYSERR;
+
+  char *filename;
+  util_get_filename (context->handle->directory, &hash, &filename);
+
+  if ((GNUNET_OK != GNUNET_DISK_directory_create_for_file(filename)) ||
+      (GNUNET_OK != GNUNET_DISK_file_copy(path, filename)))
+  {
+    GNUNET_free(filename);
+    return GNUNET_SYSERR;
+  }
+
+  struct GNUNET_CRYPTO_SymmetricSessionKey key;
+  GNUNET_CRYPTO_symmetric_create_session_key(&key);
+
+  if (GNUNET_OK != util_encrypt_file(filename, &key))
+  {
+    GNUNET_free(filename);
+    return GNUNET_SYSERR;
+  }
+
+  char* p = GNUNET_strdup(path);
+
+  struct GNUNET_CHAT_File *file = file_create_from_disk(
+      context->handle, basename(p), &hash, &key
+  );
+
+  GNUNET_free(p);
+
+  struct GNUNET_FS_BlockOptions bo;
+
+  bo.anonymity_level = 1;
+  bo.content_priority = 100;
+  bo.replication_level = 1;
+
+  bo.expiration_time = GNUNET_TIME_absolute_add(
+      GNUNET_TIME_absolute_get(), GNUNET_TIME_relative_get_hour_()
+  );
+
+  struct GNUNET_FS_FileInformation* fi = GNUNET_FS_file_information_create_from_file(
+      context->handle->fs,
+      file,
+      filename,
+      NULL,
+      file->meta,
+      GNUNET_YES,
+      &bo
+  );
+
+  file->publish = GNUNET_FS_publish_start(
+      context->handle->fs, fi,
+      NULL, NULL, NULL,
+      GNUNET_FS_PUBLISH_OPTION_NONE
+  );
+
+  GNUNET_free(filename);
+
+  // TODO: share file
+
+  return GNUNET_OK;
 }
 
 
-void
+int
 GNUNET_CHAT_context_send_uri (struct GNUNET_CHAT_Context *context,
 			      const char *uri)
 {
   if ((!context) || (!uri))
-    return;
+    return GNUNET_SYSERR;
 
   struct GNUNET_FS_Uri *furi = GNUNET_FS_uri_parse(uri, NULL);
 
   if (!furi)
-    return;
+    return GNUNET_SYSERR;
 
   // TODO: download file, hash file, share file
+
+  return GNUNET_SYSERR;
 }
 
 
-void
+int
 GNUNET_CHAT_context_share_file (struct GNUNET_CHAT_Context *context,
 				const struct GNUNET_CHAT_File *file)
 {
   if ((!context) || (!file) || (strlen(file->name) > NAME_MAX))
-    return;
+    return GNUNET_SYSERR;
 
   struct GNUNET_MESSENGER_Message msg;
   msg.header.kind = GNUNET_MESSENGER_KIND_FILE;
@@ -421,24 +490,8 @@ GNUNET_CHAT_context_share_file (struct GNUNET_CHAT_Context *context,
   GNUNET_MESSENGER_send_message(context->room, &msg, NULL);
 
   GNUNET_free(msg.body.file.uri);
+  return GNUNET_OK;
 }
-
-
-void
-GNUNET_CHAT_context_delete_message (const struct GNUNET_CHAT_Message *message,
-				    struct GNUNET_TIME_Relative delay)
-{
-  if (!message)
-    return;
-
-  struct GNUNET_MESSENGER_Message msg;
-  msg.header.kind = GNUNET_MESSENGER_KIND_DELETE;
-  GNUNET_memcpy(&(msg.body.delete.hash), &(message->hash), sizeof(message->hash));
-  msg.body.delete.delay = GNUNET_TIME_relative_hton(delay);
-
-  GNUNET_MESSENGER_send_message(message->context->room, &msg, NULL);
-}
-
 
 
 int
@@ -571,6 +624,23 @@ GNUNET_CHAT_message_get_invitation (const struct GNUNET_CHAT_Message *message)
 }
 
 
+int
+GNUNET_CHAT_message_delete (const struct GNUNET_CHAT_Message *message,
+			    struct GNUNET_TIME_Relative delay)
+{
+  if (!message)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_MESSENGER_Message msg;
+  msg.header.kind = GNUNET_MESSENGER_KIND_DELETE;
+  GNUNET_memcpy(&(msg.body.delete.hash), &(message->hash), sizeof(message->hash));
+  msg.body.delete.delay = GNUNET_TIME_relative_hton(delay);
+
+  GNUNET_MESSENGER_send_message(message->context->room, &msg, NULL);
+  return GNUNET_OK;
+}
+
+
 const struct GNUNET_HashCode*
 GNUNET_CHAT_file_get_hash (const struct GNUNET_CHAT_File *file)
 {
@@ -590,11 +660,15 @@ GNUNET_CHAT_file_get_size (const struct GNUNET_CHAT_File *file)
   if (file->uri)
     return GNUNET_FS_uri_chk_get_file_size(file->uri);
 
-  const char *path = ""; // TODO: path = download_directory + file->name
+  char *filename;
+  util_get_filename (file->handle->directory, &(file->hash), &filename);
 
-  // TODO: check size through info or check locally?
+  uint64_t size;
+  if (GNUNET_OK != GNUNET_DISK_file_size(filename, &size, GNUNET_NO, GNUNET_YES))
+    size = 0;
 
-  return 0;
+  GNUNET_free(filename);
+  return size;
 }
 
 
@@ -604,11 +678,13 @@ GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file)
   if (!file)
     return GNUNET_SYSERR;
 
-  const char *path = ""; // TODO: path = download_directory + file->name
+  char *filename;
+  util_get_filename (file->handle->directory, &(file->hash), &filename);
 
-  // TODO: check locally?
+  int result = GNUNET_DISK_file_test(filename);
 
-  return GNUNET_SYSERR;
+  GNUNET_free(filename);
+  return result;
 }
 
 
@@ -617,27 +693,44 @@ GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
 				 GNUNET_CHAT_MessageFileDownloadCallback callback,
 				 void *cls)
 {
-  if (!file)
+  if ((!file) || (!(file->uri)))
     return GNUNET_SYSERR;
 
-  // TODO: check if downloading?
+  if (file->download)
+  {
+    GNUNET_FS_download_resume(file->download);
+    return GNUNET_OK;
+  }
 
-  const char *path = ""; // TODO: path = download_directory + file->name
+  const uint64_t size = GNUNET_FS_uri_chk_get_file_size(file->uri);
+
+  char *filename;
+  util_get_filename (file->handle->directory, &(file->hash), &filename);
+
+  uint64_t offset;
+  if (GNUNET_OK != GNUNET_DISK_file_size(filename, &offset, GNUNET_NO, GNUNET_YES))
+    offset = 0;
+
+  if (offset >= size)
+    return GNUNET_OK;
+
+  const uint64_t remaining = (size - offset);
 
   file->download = GNUNET_FS_download_start(
       file->handle->fs,
       file->uri,
+      file->meta,
+      filename,
       NULL,
-      path,
-      NULL,
-      0,
-      0,
-      0,
+      offset,
+      remaining,
+      1,
       GNUNET_FS_DOWNLOAD_OPTION_NONE,
-      NULL,
+      file,
       NULL
   );
 
+  GNUNET_free(filename);
   return GNUNET_OK;
 }
 
@@ -672,6 +765,34 @@ GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file)
 
   GNUNET_FS_download_stop(file->download, GNUNET_YES);
   file->download = NULL;
+  return GNUNET_OK;
+}
+
+
+int
+GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file)
+{
+  if (!file)
+    return GNUNET_SYSERR;
+
+  if (file->publish)
+  {
+    GNUNET_FS_publish_stop(file->publish);
+    file->publish = NULL;
+    return GNUNET_OK;
+  }
+
+  if (file->unindex)
+    return GNUNET_OK;
+
+  char *filename;
+  util_get_filename (file->handle->directory, &(file->hash), &filename);
+
+  file->unindex = GNUNET_FS_unindex_start(
+      file->handle->fs, filename, file
+  );
+
+  GNUNET_free(filename);
   return GNUNET_OK;
 }
 

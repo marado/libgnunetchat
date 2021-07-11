@@ -27,14 +27,31 @@
 
 #include <gnunet/platform.h>
 #include <gnunet/gnunet_common.h>
+#include <gnunet/gnunet_crypto_lib.h>
+#include <gnunet/gnunet_disk_lib.h>
 #include <gnunet/gnunet_messenger_service.h>
 #include <gnunet/gnunet_util_lib.h>
 
 void
 util_shorthash_from_member (const struct GNUNET_MESSENGER_Contact *member,
-			    struct GNUNET_ShortHashCode* shorthash);
+			    struct GNUNET_ShortHashCode *shorthash);
 
 void
-util_set_name_field (const char *name, char** field);
+util_set_name_field (const char *name, char **field);
+
+int
+util_hash_file (const char *filename, struct GNUNET_HashCode *hash);
+
+int
+util_encrypt_file (const char *filename,
+		   const struct GNUNET_CRYPTO_SymmetricSessionKey *key);
+
+int
+util_decrypt_file (const char *filename,
+		   const struct GNUNET_CRYPTO_SymmetricSessionKey *key);
+
+int
+util_get_filename (const char *directory, const struct GNUNET_HashCode *hash,
+		   char **filename);
 
 #endif /* GNUNET_CHAT_UTIL_H_ */
