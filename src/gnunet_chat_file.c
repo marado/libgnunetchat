@@ -22,81 +22,39 @@
  * @file gnunet_chat_file.c
  */
 
-#include "gnunet_chat_lib.h"
 #include "gnunet_chat_file.h"
 
-const struct GNUNET_HashCode*
-GNUNET_CHAT_file_get_hash (const struct GNUNET_CHAT_File *file)
+#include <limits.h>
+
+struct GNUNET_CHAT_File*
+file_create_from_message (struct GNUNET_CHAT_Handle *handle,
+			  const struct GNUNET_MESSENGER_MessageFile* message)
 {
-  return &(file->hash);
+  struct GNUNET_CHAT_File* file = GNUNET_new(struct GNUNET_CHAT_File);
+
+  file->handle = handle;
+
+  file->name = GNUNET_strndup(message->name, NAME_MAX);
+
+  GNUNET_memcpy(&(file->key), &(message->key), sizeof(file->key));
+  GNUNET_memcpy(&(file->hash), &(message->hash), sizeof(file->hash));
+
+  file->uri = GNUNET_FS_uri_parse(message->uri, NULL);
+  file->download = NULL;
+  file->publish = NULL;
+  file->unindex = NULL;
+
+  return file;
 }
 
-uint64_t
-GNUNET_CHAT_file_get_size (const struct GNUNET_CHAT_File *file)
+void
+file_destroy (struct GNUNET_CHAT_File* file)
 {
-  return 0;
-}
+  if (file->uri)
+    GNUNET_FS_uri_destroy(file->uri);
 
-int
-GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file)
-{
-  return GNUNET_NO;
-}
+  if (file->name)
+    GNUNET_free(file->name);
 
-int
-GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
-				 GNUNET_CHAT_MessageFileDownloadCallback callback,
-				 void *cls)
-{
-  if (!file)
-    return GNUNET_SYSERR;
-
-  struct GNUNET_FS_Handle *handle;
-  const char *path = ""; // TODO: path = download_directory + filename
-
-  GNUNET_FS_download_start(
-      handle,
-      file->uri,
-      NULL,
-      path,
-      NULL,
-      0,
-      0,
-      0,
-      GNUNET_FS_DOWNLOAD_OPTION_NONE,
-      NULL,
-      NULL
-  );
-
-  return GNUNET_OK;
-}
-
-int
-GNUNET_CHAT_file_pause_download (struct GNUNET_CHAT_File *file)
-{
-  if (!file)
-    return GNUNET_SYSERR;
-
-  GNUNET_FS_download_suspend(file->context);
-  return GNUNET_OK;
-}
-
-int
-GNUNET_CHAT_file_resume_download (struct GNUNET_CHAT_File *file)
-{
-  if (!file)
-    return GNUNET_SYSERR;
-
-  GNUNET_FS_download_resume(file->context);
-  return GNUNET_OK;
-}
-
-int
-GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file)
-{
-  if (!file)
-    return GNUNET_SYSERR;
-
-  GNUNET_FS_download_stop(file->context, GNUNET_YES);
-  return GNUNET_OK;
+  GNUNET_free(file);
 }

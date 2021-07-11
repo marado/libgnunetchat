@@ -26,6 +26,8 @@
 #define GNUNET_CHAT_CONTEXT_H_
 
 #include <gnunet/platform.h>
+#include <gnunet/gnunet_common.h>
+#include <gnunet/gnunet_container_lib.h>
 #include <gnunet/gnunet_messenger_service.h>
 #include <gnunet/gnunet_util_lib.h>
 
@@ -41,32 +43,22 @@ struct GNUNET_CHAT_Handle;
 struct GNUNET_CHAT_Context
 {
   struct GNUNET_CHAT_Handle *handle;
-  struct GNUNET_MESSENGER_Room *room;
 
   enum GNUNET_CHAT_ContextType type;
-  struct GNUNET_HashCode key;
   char *nick;
+
+  struct GNUNET_CONTAINER_MultiHashMap *messages;
+  struct GNUNET_CONTAINER_MultiHashMap *invites;
+  struct GNUNET_CONTAINER_MultiHashMap *files;
+
+  struct GNUNET_MESSENGER_Room *room;
 };
 
 struct GNUNET_CHAT_Context*
-context_create (struct GNUNET_CHAT_Handle *handle,
-		enum GNUNET_CHAT_ContextType type,
-		const struct GNUNET_HashCode *key);
+context_create_from_room (struct GNUNET_CHAT_Handle *handle,
+			  struct GNUNET_MESSENGER_Room *room);
 
 void
 context_destroy (struct GNUNET_CHAT_Context* context);
-
-enum GNUNET_CHAT_ContextType
-context_get_type (struct GNUNET_CHAT_Context* context);
-
-const struct GNUNET_HashCode*
-context_get_key (struct GNUNET_CHAT_Context* context);
-
-const char*
-context_get_nick (struct GNUNET_CHAT_Context* context);
-
-void
-context_set_nick (struct GNUNET_CHAT_Context* context,
-		  const char *nick);
 
 #endif /* GNUNET_CHAT_CONTEXT_H_ */

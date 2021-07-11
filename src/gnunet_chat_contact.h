@@ -25,27 +25,27 @@
 #ifndef GNUNET_CHAT_CONTACT_H_
 #define GNUNET_CHAT_CONTACT_H_
 
-#include "gnunet_chat_context.h"
+#include <gnunet/platform.h>
+#include <gnunet/gnunet_common.h>
+#include <gnunet/gnunet_messenger_service.h>
+#include <gnunet/gnunet_util_lib.h>
+
+struct GNUNET_CHAT_Handle;
+struct GNUNET_CHAT_Context;
 
 struct GNUNET_CHAT_Contact
 {
   struct GNUNET_CHAT_Handle *handle;
   struct GNUNET_CHAT_Context *context;
 
-  const struct GNUNET_MESSENGER_Contact *contact;
+  const struct GNUNET_MESSENGER_Contact *member;
 };
 
 struct GNUNET_CHAT_Contact*
-contact_create (struct GNUNET_CHAT_Handle *handle,
-		const struct GNUNET_MESSENGER_Contact *msg_contact);
+contact_create_from_member (struct GNUNET_CHAT_Handle *handle,
+			    const struct GNUNET_MESSENGER_Contact *member);
 
 void
-contact_destroy (struct GNUNET_CHAT_Contact *contact);
-
-int
-contact_call (struct GNUNET_CHAT_Handle *handle,
-	      const struct GNUNET_MESSENGER_Contact *msg_contact,
-	      GNUNET_CHAT_ContactCallback callback,
-	      void *cls);
+contact_destroy (struct GNUNET_CHAT_Contact* contact);
 
 #endif /* GNUNET_CHAT_CONTACT_H_ */

@@ -25,11 +25,28 @@
 #ifndef GNUNET_CHAT_INVITATION_H_
 #define GNUNET_CHAT_INVITATION_H_
 
-#include "gnunet_chat_lib.h"
+#include <gnunet/platform.h>
+#include <gnunet/gnunet_common.h>
+#include <gnunet/gnunet_crypto_lib.h>
+#include <gnunet/gnunet_messenger_service.h>
+#include <gnunet/gnunet_peer_lib.h>
+#include <gnunet/gnunet_util_lib.h>
+
+struct GNUNET_CHAT_Context;
 
 struct GNUNET_CHAT_Invitation
 {
+  struct GNUNET_CHAT_Context *context;
 
+  struct GNUNET_HashCode key;
+  GNUNET_PEER_Id door;
 };
+
+struct GNUNET_CHAT_Invitation*
+invitation_create_from_message (struct GNUNET_CHAT_Context *context,
+				const struct GNUNET_MESSENGER_MessageInvite *message);
+
+void
+invitation_destroy (struct GNUNET_CHAT_Invitation *invitation);
 
 #endif /* GNUNET_CHAT_INVITATION_H_ */

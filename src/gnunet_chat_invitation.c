@@ -24,14 +24,24 @@
 
 #include "gnunet_chat_invitation.h"
 
-void
-GNUNET_CHAT_invitation_accept (struct GNUNET_CHAT_Invitation *invitation)
+struct GNUNET_CHAT_Invitation*
+invitation_create_from_message (struct GNUNET_CHAT_Context *context,
+				const struct GNUNET_MESSENGER_MessageInvite *message)
 {
-  //TODO
+  struct GNUNET_CHAT_Invitation *invitation = GNUNET_new(struct GNUNET_CHAT_Invitation);
+
+  invitation->context = context;
+
+  GNUNET_memcpy(&(invitation->key), &(message->key), sizeof(invitation->key));
+  invitation->door = GNUNET_PEER_intern(&(message->door));
+
+  return invitation;
 }
 
 void
-GNUNET_CHAT_invitation_decline (struct GNUNET_CHAT_Invitation *invitation)
+invitation_destroy (struct GNUNET_CHAT_Invitation *invitation)
 {
-  //TODO
+  GNUNET_PEER_decrement_rcs(&(invitation->door), 1);
+
+  GNUNET_free(invitation);
 }

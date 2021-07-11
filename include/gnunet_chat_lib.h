@@ -29,9 +29,8 @@
 #ifndef GNUNET_CHAT_LIB_H_
 #define GNUNET_CHAT_LIB_H_
 
-#define GNUNET_UNUSED __attribute__ ((unused))
-
 #include <gnunet/platform.h>
+#include <gnunet/gnunet_common.h>
 #include <gnunet/gnunet_util_lib.h>
 
 /**
@@ -442,24 +441,8 @@ GNUNET_CHAT_context_share_file (struct GNUNET_CHAT_Context *context,
  * @param delay
  */
 void
-GNUNET_CHAT_context_delete_message (struct GNUNET_CHAT_Context *context,
-				    const struct GNUNET_HashCode *hash,
+GNUNET_CHAT_context_delete_message (const struct GNUNET_CHAT_Message *message,
 				    struct GNUNET_TIME_Relative delay);
-
-/**
- * TODO
- *
- * @param context
- * @param hash
- * @param callback
- * @param cls
- * @return
- */
-int
-GNUNET_CHAT_context_get_message (struct GNUNET_CHAT_Context *context,
-				 const struct GNUNET_HashCode *hash,
-				 GNUNET_CHAT_ContextMessageCallback callback,
-				 void *cls);
 
 /**
  * TODO
@@ -614,13 +597,5 @@ GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file);
  */
 void
 GNUNET_CHAT_invitation_accept (struct GNUNET_CHAT_Invitation *invitation);
-
-/**
- * TODO
- *
- * @param invitation
- */
-void
-GNUNET_CHAT_invitation_decline (struct GNUNET_CHAT_Invitation *invitation);
 
 #endif /* GNUNET_CHAT_LIB_H_ */

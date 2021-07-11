@@ -26,13 +26,27 @@
 #define GNUNET_CHAT_MESSAGE_H_
 
 #include <gnunet/platform.h>
+#include <gnunet/gnunet_common.h>
 #include <gnunet/gnunet_messenger_service.h>
 #include <gnunet/gnunet_util_lib.h>
 
+struct GNUNET_CHAT_Context;
+
 struct GNUNET_CHAT_Message
 {
+  struct GNUNET_CHAT_Context *context;
+
   struct GNUNET_HashCode hash;
-  const struct GNUNET_MESSENGER_Message *message;
+
+  const struct GNUNET_MESSENGER_Message *msg;
 };
+
+struct GNUNET_CHAT_Message*
+message_create_from_msg (struct GNUNET_CHAT_Context *context,
+			 const struct GNUNET_HashCode *hash,
+			 const struct GNUNET_MESSENGER_Message *msg);
+
+void
+message_destroy (struct GNUNET_CHAT_Message* message);
 
 #endif /* GNUNET_CHAT_MESSAGE_H_ */

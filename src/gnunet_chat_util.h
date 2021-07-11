@@ -19,39 +19,22 @@
  */
 /*
  * @author Tobias Frisch
- * @file gnunet_chat_group.h
+ * @file gnunet_chat_util.h
  */
 
-#ifndef GNUNET_CHAT_GROUP_H_
-#define GNUNET_CHAT_GROUP_H_
+#ifndef GNUNET_CHAT_UTIL_H_
+#define GNUNET_CHAT_UTIL_H_
 
 #include <gnunet/platform.h>
 #include <gnunet/gnunet_common.h>
-#include <gnunet/gnunet_regex_service.h>
+#include <gnunet/gnunet_messenger_service.h>
 #include <gnunet/gnunet_util_lib.h>
 
-struct GNUNET_CHAT_Handle;
-struct GNUNET_CHAT_Context;
-
-struct GNUNET_CHAT_Group
-{
-  struct GNUNET_CHAT_Handle *handle;
-  struct GNUNET_CHAT_Context *context;
-
-  char *topic;
-
-  struct GNUNET_REGEX_Announcement *announcement;
-  struct GNUNET_REGEX_Search *search;
-};
-
-struct GNUNET_CHAT_Group*
-group_create_from_context (struct GNUNET_CHAT_Handle *handle,
-			   struct GNUNET_CHAT_Context *context);
+void
+util_shorthash_from_member (const struct GNUNET_MESSENGER_Contact *member,
+			    struct GNUNET_ShortHashCode* shorthash);
 
 void
-group_destroy (struct GNUNET_CHAT_Group* group);
+util_set_name_field (const char *name, char** field);
 
-void
-group_publish (struct GNUNET_CHAT_Group* group);
-
-#endif /* GNUNET_CHAT_GROUP_H_ */
+#endif /* GNUNET_CHAT_UTIL_H_ */
