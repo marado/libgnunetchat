@@ -41,17 +41,37 @@ enum GNUNET_CHAT_MessageKind
   /**
    * TODO
    */
-  GNUNET_CHAT_KIND_TEXT = 1,       /**< GNUNET_CHAT_KIND_TEXT */
+  GNUNET_CHAT_KIND_JOIN = 1,       /**< GNUNET_CHAT_KIND_JOIN */
 
   /**
    * TODO
    */
-  GNUNET_CHAT_KIND_FILE = 2,       /**< GNUNET_CHAT_KIND_FILE */
+  GNUNET_CHAT_KIND_LEAVE = 2,      /**< GNUNET_CHAT_KIND_LEAVE */
 
   /**
    * TODO
    */
-  GNUNET_CHAT_KIND_INVITATION = 3, /**< GNUNET_CHAT_KIND_INVITATION */
+  GNUNET_CHAT_KIND_CONTACT = 3,    /**< GNUNET_CHAT_KIND_CONTACT */
+
+  /**
+   * TODO
+   */
+  GNUNET_CHAT_KIND_INVITATION = 4, /**< GNUNET_CHAT_KIND_INVITATION */
+
+  /**
+   * TODO
+   */
+  GNUNET_CHAT_KIND_TEXT = 5,       /**< GNUNET_CHAT_KIND_TEXT */
+
+  /**
+   * TODO
+   */
+  GNUNET_CHAT_KIND_FILE = 6,       /**< GNUNET_CHAT_KIND_FILE */
+
+  /**
+   * TODO
+   */
+  GNUNET_CHAT_KIND_DELETION = 7,   /**< GNUNET_CHAT_KIND_DELETION */
 
   /**
    * TODO
@@ -338,6 +358,26 @@ GNUNET_CHAT_contact_get_context (struct GNUNET_CHAT_Contact *contact);
 /**
  * TODO
  *
+ * @param contact
+ * @param user_pointer
+ * @return
+ */
+void
+GNUNET_CHAT_contact_set_user_pointer (struct GNUNET_CHAT_Contact *contact,
+				      void *user_pointer);
+
+/**
+ * TODO
+ *
+ * @param contact
+ * @return
+ */
+void*
+GNUNET_CHAT_contact_get_user_pointer (struct GNUNET_CHAT_Contact *contact);
+
+/**
+ * TODO
+ *
  * @param group
  * @return
  */
@@ -352,7 +392,7 @@ GNUNET_CHAT_group_leave (struct GNUNET_CHAT_Group *group);
  */
 void
 GNUNET_CHAT_group_set_name (struct GNUNET_CHAT_Group *group,
-			      const char *name);
+			    const char *name);
 
 /**
  * TODO
@@ -362,6 +402,24 @@ GNUNET_CHAT_group_set_name (struct GNUNET_CHAT_Group *group,
  */
 const char*
 GNUNET_CHAT_group_get_name (const struct GNUNET_CHAT_Group *group);
+
+/**
+ * TODO
+ *
+ * @param group
+ * @param user_pointer
+ */
+void
+GNUNET_CHAT_group_set_user_pointer (struct GNUNET_CHAT_Group *group,
+				    void *user_pointer);
+
+/**
+ * TODO
+ *
+ * @param group
+ */
+void*
+GNUNET_CHAT_group_get_user_pointer (struct GNUNET_CHAT_Group *group);
 
 /**
  * TODO
@@ -394,6 +452,24 @@ GNUNET_CHAT_group_iterate_contacts (struct GNUNET_CHAT_Group *group,
  */
 struct GNUNET_CHAT_Context*
 GNUNET_CHAT_group_get_context (struct GNUNET_CHAT_Group *group);
+
+/**
+ * TODO
+ *
+ * @param context
+ * @param user_pointer
+ */
+void
+GNUNET_CHAT_context_set_user_pointer (struct GNUNET_CHAT_Context *context,
+				      void *user_pointer);
+
+/**
+ * TODO
+ *
+ * @param context
+ */
+void*
+GNUNET_CHAT_context_get_user_pointer (const struct GNUNET_CHAT_Context *context);
 
 /**
  * TODO

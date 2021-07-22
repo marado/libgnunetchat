@@ -55,6 +55,7 @@ GNUNET_CHAT_start (const struct GNUNET_CONFIGURATION_Handle *cfg,
   );
 }
 
+
 void
 GNUNET_CHAT_stop (struct GNUNET_CHAT_Handle *handle)
 {
@@ -64,6 +65,7 @@ GNUNET_CHAT_stop (struct GNUNET_CHAT_Handle *handle)
   handle_destroy(handle);
 }
 
+
 int
 GNUNET_CHAT_update (struct GNUNET_CHAT_Handle *handle)
 {
@@ -72,6 +74,7 @@ GNUNET_CHAT_update (struct GNUNET_CHAT_Handle *handle)
 
   return GNUNET_MESSENGER_update(handle->messenger);
 }
+
 
 int
 GNUNET_CHAT_set_name (struct GNUNET_CHAT_Handle *handle,
@@ -86,6 +89,7 @@ GNUNET_CHAT_set_name (struct GNUNET_CHAT_Handle *handle,
   return GNUNET_MESSENGER_set_name(handle->messenger, name);
 }
 
+
 const char*
 GNUNET_CHAT_get_name (const struct GNUNET_CHAT_Handle *handle)
 {
@@ -95,6 +99,7 @@ GNUNET_CHAT_get_name (const struct GNUNET_CHAT_Handle *handle)
   return GNUNET_MESSENGER_get_name(handle->messenger);
 }
 
+
 const struct GNUNET_IDENTITY_PublicKey*
 GNUNET_CHAT_get_key (const struct GNUNET_CHAT_Handle *handle)
 {
@@ -103,6 +108,28 @@ GNUNET_CHAT_get_key (const struct GNUNET_CHAT_Handle *handle)
 
   return GNUNET_MESSENGER_get_key(handle->messenger);
 }
+
+
+void
+GNUNET_CHAT_set_user_pointer (struct GNUNET_CHAT_Handle *handle,
+			      void *user_pointer)
+{
+  if (!handle)
+    return;
+
+  handle->user_pointer = user_pointer;
+}
+
+
+void*
+GNUNET_CHAT_get_user_pointer (const struct GNUNET_CHAT_Handle *handle)
+{
+  if (!handle)
+    return NULL;
+
+  return handle->user_pointer;
+}
+
 
 int
 GNUNET_CHAT_iterate_contacts (struct GNUNET_CHAT_Handle *handle,
@@ -121,6 +148,7 @@ GNUNET_CHAT_iterate_contacts (struct GNUNET_CHAT_Handle *handle,
       handle->contacts, it_handle_iterate_contacts, &it
   );
 }
+
 
 struct GNUNET_CHAT_Group *
 GNUNET_CHAT_group_create (struct GNUNET_CHAT_Handle *handle,
@@ -174,6 +202,7 @@ destroy_context:
   return NULL;
 }
 
+
 int
 GNUNET_CHAT_iterate_groups (struct GNUNET_CHAT_Handle *handle,
 			    GNUNET_CHAT_GroupCallback callback,
@@ -191,6 +220,7 @@ GNUNET_CHAT_iterate_groups (struct GNUNET_CHAT_Handle *handle,
       handle->groups, it_handle_iterate_groups, &it
   );
 }
+
 
 int
 GNUNET_CHAT_contact_delete (struct GNUNET_CHAT_Contact *contact)
@@ -219,6 +249,7 @@ GNUNET_CHAT_contact_delete (struct GNUNET_CHAT_Contact *contact)
   contact_destroy(contact);
   return GNUNET_OK;
 }
+
 
 void
 GNUNET_CHAT_contact_set_name (struct GNUNET_CHAT_Contact *contact,
@@ -261,6 +292,27 @@ GNUNET_CHAT_contact_get_context (struct GNUNET_CHAT_Contact *contact)
     return NULL;
 
   return contact->context;
+}
+
+
+void
+GNUNET_CHAT_contact_set_user_pointer (struct GNUNET_CHAT_Contact *contact,
+				      void *user_pointer)
+{
+  if (!contact)
+    return;
+
+  contact->user_pointer = user_pointer;
+}
+
+
+void*
+GNUNET_CHAT_contact_get_user_pointer (struct GNUNET_CHAT_Contact *contact)
+{
+  if (!contact)
+    return NULL;
+
+  return contact->user_pointer;
 }
 
 
@@ -312,6 +364,27 @@ GNUNET_CHAT_group_get_name (const struct GNUNET_CHAT_Group *group)
 
 
 void
+GNUNET_CHAT_group_set_user_pointer (struct GNUNET_CHAT_Group *group,
+				    void *user_pointer)
+{
+  if (!group)
+    return;
+
+  group->user_pointer = user_pointer;
+}
+
+
+void*
+GNUNET_CHAT_group_get_user_pointer (struct GNUNET_CHAT_Group *group)
+{
+  if (!group)
+    return NULL;
+
+  return group->user_pointer;
+}
+
+
+void
 GNUNET_CHAT_group_invite_contact (struct GNUNET_CHAT_Group *group,
 				  struct GNUNET_CHAT_Contact *contact)
 {
@@ -359,6 +432,27 @@ GNUNET_CHAT_group_get_context (struct GNUNET_CHAT_Group *group)
     return NULL;
 
   return group->context;
+}
+
+
+void
+GNUNET_CHAT_context_set_user_pointer (struct GNUNET_CHAT_Context *context,
+				      void *user_pointer)
+{
+  if (!context)
+    return;
+
+  context->user_pointer = user_pointer;
+}
+
+
+void*
+GNUNET_CHAT_context_get_user_pointer (const struct GNUNET_CHAT_Context *context)
+{
+  if (!context)
+    return NULL;
+
+  return context->user_pointer;
 }
 
 
@@ -521,12 +615,22 @@ GNUNET_CHAT_message_get_kind (const struct GNUNET_CHAT_Message *message)
 
   switch (message->msg->header.kind)
   {
+    case GNUNET_MESSENGER_KIND_JOIN:
+      return GNUNET_CHAT_KIND_JOIN;
+    case GNUNET_MESSENGER_KIND_LEAVE:
+      return GNUNET_CHAT_KIND_LEAVE;
+    case GNUNET_MESSENGER_KIND_NAME:
+    case GNUNET_MESSENGER_KIND_KEY:
+    case GNUNET_MESSENGER_KIND_ID:
+      return GNUNET_CHAT_KIND_CONTACT;
     case GNUNET_MESSENGER_KIND_INVITE:
       return GNUNET_CHAT_KIND_INVITATION;
     case GNUNET_MESSENGER_KIND_TEXT:
       return GNUNET_CHAT_KIND_TEXT;
     case GNUNET_MESSENGER_KIND_FILE:
       return GNUNET_CHAT_KIND_FILE;
+    case GNUNET_MESSENGER_KIND_DELETE:
+      return GNUNET_CHAT_KIND_DELETION;
     default:
       return GNUNET_CHAT_KIND_UNKNOWN;
   }
@@ -633,8 +737,8 @@ GNUNET_CHAT_message_delete (const struct GNUNET_CHAT_Message *message,
 
   struct GNUNET_MESSENGER_Message msg;
   msg.header.kind = GNUNET_MESSENGER_KIND_DELETE;
-  GNUNET_memcpy(&(msg.body.delete.hash), &(message->hash), sizeof(message->hash));
-  msg.body.delete.delay = GNUNET_TIME_relative_hton(delay);
+  GNUNET_memcpy(&(msg.body.deletion.hash), &(message->hash), sizeof(message->hash));
+  msg.body.deletion.delay = GNUNET_TIME_relative_hton(delay);
 
   GNUNET_MESSENGER_send_message(message->context->room, &msg, NULL);
   return GNUNET_OK;

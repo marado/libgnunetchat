@@ -52,6 +52,8 @@ struct GNUNET_CHAT_Context
   struct GNUNET_CONTAINER_MultiHashMap *files;
 
   struct GNUNET_MESSENGER_Room *room;
+
+  void *user_pointer;
 };
 
 struct GNUNET_CHAT_Context*

@@ -42,6 +42,8 @@ struct GNUNET_CHAT_Group
 
   struct GNUNET_REGEX_Announcement *announcement;
   struct GNUNET_REGEX_Search *search;
+
+  void *user_pointer;
 };
 
 struct GNUNET_CHAT_Group*

@@ -77,6 +77,8 @@ handle_create_from_config (const struct GNUNET_CONFIGURATION_Handle* cfg,
       on_handle_message, handle
   );
 
+  handle->user_pointer = NULL;
+
   return handle;
 }
 

@@ -56,6 +56,8 @@ struct GNUNET_CHAT_Handle
   struct GNUNET_ARM_Handle *arm;
   struct GNUNET_FS_Handle *fs;
   struct GNUNET_MESSENGER_Handle *messenger;
+
+  void *user_pointer;
 };
 
 struct GNUNET_CHAT_Handle*

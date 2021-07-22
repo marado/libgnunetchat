@@ -43,6 +43,8 @@ context_create_from_room (struct GNUNET_CHAT_Handle *handle,
 
   context->room = room;
 
+  context->user_pointer = NULL;
+
   return context;
 }
 

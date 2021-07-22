@@ -37,6 +37,8 @@ contact_create_from_member (struct GNUNET_CHAT_Handle *handle,
 
   contact->member = member;
 
+  contact->user_pointer = NULL;
+
   return contact;
 }
 

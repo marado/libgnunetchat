@@ -39,6 +39,8 @@ struct GNUNET_CHAT_Contact
   struct GNUNET_CHAT_Context *context;
 
   const struct GNUNET_MESSENGER_Contact *member;
+
+  void *user_pointer;
 };
 
 struct GNUNET_CHAT_Contact*

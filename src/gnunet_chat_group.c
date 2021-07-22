@@ -40,6 +40,8 @@ group_create_from_context (struct GNUNET_CHAT_Handle *handle,
   group->announcement = NULL;
   group->search = NULL;
 
+  group->user_pointer = NULL;
+
   return group;
 }
 
