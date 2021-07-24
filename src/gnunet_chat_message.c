@@ -24,9 +24,12 @@
 
 #include "gnunet_chat_message.h"
 
+#include "gnunet_chat_message_intern.c"
+
 struct GNUNET_CHAT_Message*
 message_create_from_msg (struct GNUNET_CHAT_Context *context,
 			 const struct GNUNET_HashCode *hash,
+			 enum GNUNET_MESSENGER_MessageFlags flags,
 			 const struct GNUNET_MESSENGER_Message *msg)
 {
   struct GNUNET_CHAT_Message *message = GNUNET_new(struct GNUNET_CHAT_Message);
@@ -34,8 +37,14 @@ message_create_from_msg (struct GNUNET_CHAT_Context *context,
   message->context = context;
 
   GNUNET_memcpy(&(message->hash), hash, sizeof(message->hash));
+  message->flags = flags;
+
+  message->head = NULL;
+  message->tail = NULL;
 
   message->msg = msg;
+
+  link_message_parent(message);
 
   return message;
 }
@@ -43,5 +52,7 @@ message_create_from_msg (struct GNUNET_CHAT_Context *context,
 void
 message_destroy (struct GNUNET_CHAT_Message* message)
 {
+  unlink_message_parent(message);
+  clear_message_children(message);
   GNUNET_free(message);
 }

@@ -23,6 +23,8 @@
  */
 
 #include "gnunet_chat_context.h"
+#include "gnunet_chat_handle.h"
+#include "gnunet_chat_util.h"
 
 #include "gnunet_chat_context_intern.c"
 
@@ -67,4 +69,71 @@ context_destroy (struct GNUNET_CHAT_Context* context)
     GNUNET_free(context->nick);
 
   GNUNET_free(context);
+}
+
+void
+context_load_config (struct GNUNET_CHAT_Context *context)
+{
+  const char *directory = context->handle->directory;
+
+  if (!directory)
+    return;
+
+  const struct GNUNET_HashCode *hash = GNUNET_MESSENGER_room_get_key(
+      context->room
+  );
+
+  char* filename;
+  util_get_filename(directory, "chats", hash, &filename);
+
+  if (GNUNET_YES != GNUNET_DISK_file_test(filename))
+    goto free_filename;
+
+  struct GNUNET_CONFIGURATION_Handle *config = GNUNET_CONFIGURATION_create();
+
+  if (GNUNET_OK != GNUNET_CONFIGURATION_load(config, directory))
+    goto destroy_config;
+
+  char* name = NULL;
+
+  if (GNUNET_OK == GNUNET_CONFIGURATION_get_value_string(
+      config, "chat", "name", &name))
+    util_set_name_field(name, &(context->nick));
+
+  if (name)
+    GNUNET_free(name);
+
+destroy_config:
+  GNUNET_CONFIGURATION_destroy(config);
+
+free_filename:
+  GNUNET_free(filename);
+}
+
+void
+context_save_config (const struct GNUNET_CHAT_Context *context)
+{
+  const char *directory = context->handle->directory;
+
+  if (!directory)
+    return;
+
+  const struct GNUNET_HashCode *hash = GNUNET_MESSENGER_room_get_key(
+      context->room
+  );
+
+  struct GNUNET_CONFIGURATION_Handle *config = GNUNET_CONFIGURATION_create();
+
+  if (context->nick)
+    GNUNET_CONFIGURATION_set_value_string(
+	config, "chat", "name", context->nick
+    );
+
+  char* filename;
+  util_get_filename(directory, "chats", hash, &filename);
+
+  GNUNET_CONFIGURATION_write(config, filename);
+  GNUNET_CONFIGURATION_destroy(config);
+
+  GNUNET_free(filename);
 }

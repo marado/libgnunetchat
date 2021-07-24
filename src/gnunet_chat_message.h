@@ -31,12 +31,25 @@
 #include <gnunet/gnunet_util_lib.h>
 
 struct GNUNET_CHAT_Context;
+struct GNUNET_CHAT_Message;
+
+struct GNUNET_CHAT_MessageList
+{
+  struct GNUNET_CHAT_Message *message;
+
+  struct GNUNET_CHAT_MessageList *prev;
+  struct GNUNET_CHAT_MessageList *next;
+};
 
 struct GNUNET_CHAT_Message
 {
   struct GNUNET_CHAT_Context *context;
 
   struct GNUNET_HashCode hash;
+  enum GNUNET_MESSENGER_MessageFlags flags;
+
+  struct GNUNET_CHAT_MessageList *head;
+  struct GNUNET_CHAT_MessageList *tail;
 
   const struct GNUNET_MESSENGER_Message *msg;
 };
@@ -44,6 +57,7 @@ struct GNUNET_CHAT_Message
 struct GNUNET_CHAT_Message*
 message_create_from_msg (struct GNUNET_CHAT_Context *context,
 			 const struct GNUNET_HashCode *hash,
+			 enum GNUNET_MESSENGER_MessageFlags flags,
 			 const struct GNUNET_MESSENGER_Message *msg);
 
 void

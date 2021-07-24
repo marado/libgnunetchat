@@ -559,6 +559,24 @@ GNUNET_CHAT_message_get_sender (const struct GNUNET_CHAT_Message *message);
  * TODO
  *
  * @param message
+ * @return
+ */
+int
+GNUNET_CHAT_message_is_sent (const struct GNUNET_CHAT_Message *message);
+
+/**
+ * TODO
+ *
+ * @param message
+ * @return
+ */
+int
+GNUNET_CHAT_message_is_private (const struct GNUNET_CHAT_Message *message);
+
+/**
+ * TODO
+ *
+ * @param message
  * @param callback
  * @param cls
  * @return

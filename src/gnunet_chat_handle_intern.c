@@ -183,6 +183,7 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
     return context;
 
   context = context_create_from_room(handle, room);
+  context_load_config(context);
 
   if (GNUNET_OK != GNUNET_CONTAINER_multihashmap_put(
       handle->contexts, key, context,
@@ -267,7 +268,7 @@ on_handle_message (void *cls,
 		   GNUNET_UNUSED const struct GNUNET_MESSENGER_Contact *sender,
 		   const struct GNUNET_MESSENGER_Message *msg,
 		   const struct GNUNET_HashCode *hash,
-		   GNUNET_UNUSED enum GNUNET_MESSENGER_MessageFlags flags)
+		   enum GNUNET_MESSENGER_MessageFlags flags)
 {
   struct GNUNET_CHAT_Handle *handle = cls;
 
@@ -285,7 +286,7 @@ on_handle_message (void *cls,
   if (message)
     return;
 
-  message = message_create_from_msg(context, hash, msg);
+  message = message_create_from_msg(context, hash, flags, msg);
 
   switch (msg->header.kind)
   {
@@ -360,6 +361,7 @@ it_destroy_handle_contexts (GNUNET_UNUSED void *cls,
 			    void *value)
 {
   struct GNUNET_CHAT_Context *context = value;
+  context_save_config(context);
   context_destroy(context);
   return GNUNET_YES;
 }

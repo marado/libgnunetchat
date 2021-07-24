@@ -27,6 +27,7 @@
 
 #include <gnunet/platform.h>
 #include <gnunet/gnunet_common.h>
+#include <gnunet/gnunet_configuration_lib.h>
 #include <gnunet/gnunet_container_lib.h>
 #include <gnunet/gnunet_messenger_service.h>
 #include <gnunet/gnunet_util_lib.h>
@@ -62,5 +63,11 @@ context_create_from_room (struct GNUNET_CHAT_Handle *handle,
 
 void
 context_destroy (struct GNUNET_CHAT_Context* context);
+
+void
+context_load_config (struct GNUNET_CHAT_Context *context);
+
+void
+context_save_config (const struct GNUNET_CHAT_Context *context);
 
 #endif /* GNUNET_CHAT_CONTEXT_H_ */

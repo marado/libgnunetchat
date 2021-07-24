@@ -51,7 +51,8 @@ util_decrypt_file (const char *filename,
 		   const struct GNUNET_CRYPTO_SymmetricSessionKey *key);
 
 int
-util_get_filename (const char *directory, const struct GNUNET_HashCode *hash,
+util_get_filename (const char *directory, const char *subdir,
+		   const struct GNUNET_HashCode *hash,
 		   char **filename);
 
 #endif /* GNUNET_CHAT_UTIL_H_ */

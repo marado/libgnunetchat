@@ -26,7 +26,6 @@
 
 #include <limits.h>
 
-#include "gnunet_chat_config.h"
 #include "gnunet_chat_contact.h"
 #include "gnunet_chat_context.h"
 #include "gnunet_chat_file.h"
@@ -489,7 +488,9 @@ GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
     return GNUNET_SYSERR;
 
   char *filename;
-  util_get_filename (context->handle->directory, &hash, &filename);
+  util_get_filename (
+      context->handle->directory, "files", &hash, &filename
+  );
 
   if ((GNUNET_OK != GNUNET_DISK_directory_create_for_file(filename)) ||
       (GNUNET_OK != GNUNET_DISK_file_copy(path, filename)))
@@ -670,6 +671,32 @@ GNUNET_CHAT_message_get_sender (const struct GNUNET_CHAT_Message *message)
 
 
 int
+GNUNET_CHAT_message_is_sent (const struct GNUNET_CHAT_Message *message)
+{
+  if (!message)
+    return GNUNET_SYSERR;
+
+  if (message->flags & GNUNET_MESSENGER_FLAG_SENT)
+    return GNUNET_YES;
+  else
+    return GNUNET_NO;
+}
+
+
+int
+GNUNET_CHAT_message_is_private (const struct GNUNET_CHAT_Message *message)
+{
+  if (!message)
+    return GNUNET_SYSERR;
+
+  if (message->flags & GNUNET_MESSENGER_FLAG_PRIVATE)
+    return GNUNET_YES;
+  else
+    return GNUNET_NO;
+}
+
+
+int
 GNUNET_CHAT_message_get_read_receipt (const struct GNUNET_CHAT_Message *message,
 				      GNUNET_CHAT_MessageReadReceiptCallback callback,
 				      void *cls)
@@ -765,7 +792,9 @@ GNUNET_CHAT_file_get_size (const struct GNUNET_CHAT_File *file)
     return GNUNET_FS_uri_chk_get_file_size(file->uri);
 
   char *filename;
-  util_get_filename (file->handle->directory, &(file->hash), &filename);
+  util_get_filename (
+      file->handle->directory, "files", &(file->hash), &filename
+  );
 
   uint64_t size;
   if (GNUNET_OK != GNUNET_DISK_file_size(filename, &size, GNUNET_NO, GNUNET_YES))
@@ -783,7 +812,9 @@ GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file)
     return GNUNET_SYSERR;
 
   char *filename;
-  util_get_filename (file->handle->directory, &(file->hash), &filename);
+  util_get_filename (
+      file->handle->directory, "files", &(file->hash), &filename
+  );
 
   int result = GNUNET_DISK_file_test(filename);
 
@@ -809,7 +840,9 @@ GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
   const uint64_t size = GNUNET_FS_uri_chk_get_file_size(file->uri);
 
   char *filename;
-  util_get_filename (file->handle->directory, &(file->hash), &filename);
+  util_get_filename (
+      file->handle->directory, "files", &(file->hash), &filename
+  );
 
   uint64_t offset;
   if (GNUNET_OK != GNUNET_DISK_file_size(filename, &offset, GNUNET_NO, GNUNET_YES))
@@ -890,7 +923,9 @@ GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file)
     return GNUNET_OK;
 
   char *filename;
-  util_get_filename (file->handle->directory, &(file->hash), &filename);
+  util_get_filename (
+      file->handle->directory, "files", &(file->hash), &filename
+  );
 
   file->unindex = GNUNET_FS_unindex_start(
       file->handle->fs, filename, file
