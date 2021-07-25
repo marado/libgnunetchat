@@ -31,6 +31,7 @@
 
 #include <gnunet/platform.h>
 #include <gnunet/gnunet_common.h>
+#include <gnunet/gnunet_time_lib.h>
 #include <gnunet/gnunet_util_lib.h>
 
 /**
@@ -184,8 +185,8 @@ typedef int
  * @return
  */
 typedef int
-(*GNUNET_CHAT_MessageReadReceiptCallback) (void *cls, struct GNUNET_CHAT_Message *message,
-					   struct GNUNET_CHAT_Contact *contact,
+(*GNUNET_CHAT_MessageReadReceiptCallback) (void *cls, const struct GNUNET_CHAT_Message *message,
+					   const struct GNUNET_CHAT_Contact *contact,
 					   int read_receipt);
 
 /**
@@ -373,7 +374,7 @@ GNUNET_CHAT_contact_set_user_pointer (struct GNUNET_CHAT_Contact *contact,
  * @return
  */
 void*
-GNUNET_CHAT_contact_get_user_pointer (struct GNUNET_CHAT_Contact *contact);
+GNUNET_CHAT_contact_get_user_pointer (const struct GNUNET_CHAT_Contact *contact);
 
 /**
  * TODO

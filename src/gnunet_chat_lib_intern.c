@@ -117,8 +117,53 @@ it_context_iterate_messages (void *cls,
   return it->cb(it->cls, it->context, message);
 }
 
+struct GNUNET_CHAT_MessageIterateReadReceipts
+{
+  const struct GNUNET_CHAT_Message *message;
+  GNUNET_CHAT_MessageReadReceiptCallback cb;
+  void *cls;
+};
 
+int
+it_message_iterate_read_receipts (void *cls,
+				  GNUNET_UNUSED struct GNUNET_MESSENGER_Room *room,
+				  const struct GNUNET_MESSENGER_Contact *member)
+{
+  struct GNUNET_CHAT_MessageIterateReadReceipts *it = cls;
+  struct GNUNET_CHAT_Handle *handle = it->message->context->handle;
 
+  if (!handle)
+    return GNUNET_NO;
 
+  struct GNUNET_ShortHashCode shorthash;
+  util_shorthash_from_member(member, &shorthash);
 
+  struct GNUNET_CHAT_Contact *contact = GNUNET_CONTAINER_multishortmap_get(
+      handle->contacts, &shorthash
+  );
 
+  if (!contact)
+    return GNUNET_YES;
+
+  struct GNUNET_TIME_Absolute *timestamp = GNUNET_CONTAINER_multishortmap_get(
+      it->message->context->timestamps, &shorthash
+  );
+
+  if (!timestamp)
+    return GNUNET_YES;
+
+  struct GNUNET_TIME_Relative delta = GNUNET_TIME_absolute_get_difference(
+      *timestamp, GNUNET_CHAT_message_get_timestamp(it->message)
+  );
+
+  int read_receipt;
+  if (GNUNET_TIME_relative_get_zero_().rel_value_us == delta.rel_value_us)
+    read_receipt = GNUNET_YES;
+  else
+    read_receipt = GNUNET_NO;
+
+  if (it->cb)
+    it->cb(it->cls, it->message, contact, read_receipt);
+
+  return GNUNET_YES;
+}

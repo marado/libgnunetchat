@@ -28,6 +28,16 @@
 #define GNUNET_UNUSED __attribute__ ((unused))
 
 int
+it_destroy_context_timestamps (GNUNET_UNUSED void *cls,
+			       GNUNET_UNUSED const struct GNUNET_ShortHashCode *key,
+			       void *value)
+{
+  struct GNUNET_TIME_Absolute *time = value;
+  GNUNET_free(time);
+  return GNUNET_YES;
+}
+
+int
 it_destroy_context_messages (GNUNET_UNUSED void *cls,
 			     GNUNET_UNUSED const struct GNUNET_HashCode *key,
 			     void *value)

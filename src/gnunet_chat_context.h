@@ -48,6 +48,7 @@ struct GNUNET_CHAT_Context
   enum GNUNET_CHAT_ContextType type;
   char *nick;
 
+  struct GNUNET_CONTAINER_MultiShortmap *timestamps;
   struct GNUNET_CONTAINER_MultiHashMap *messages;
   struct GNUNET_CONTAINER_MultiHashMap *invites;
   struct GNUNET_CONTAINER_MultiHashMap *files;

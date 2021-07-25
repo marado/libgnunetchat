@@ -48,9 +48,6 @@ struct GNUNET_CHAT_Message
   struct GNUNET_HashCode hash;
   enum GNUNET_MESSENGER_MessageFlags flags;
 
-  struct GNUNET_CHAT_MessageList *head;
-  struct GNUNET_CHAT_MessageList *tail;
-
   const struct GNUNET_MESSENGER_Message *msg;
 };
 

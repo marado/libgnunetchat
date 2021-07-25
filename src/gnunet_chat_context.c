@@ -39,6 +39,7 @@ context_create_from_room (struct GNUNET_CHAT_Handle *handle,
   context->type = GNUNET_CHAT_CONTEXT_TYPE_UNKNOWN;
   context->nick = NULL;
 
+  context->timestamps = GNUNET_CONTAINER_multishortmap_create(8, GNUNET_NO);
   context->messages = GNUNET_CONTAINER_multihashmap_create(8, GNUNET_NO);
   context->invites = GNUNET_CONTAINER_multihashmap_create(8, GNUNET_NO);
   context->files = GNUNET_CONTAINER_multihashmap_create(8, GNUNET_NO);
@@ -53,14 +54,19 @@ context_create_from_room (struct GNUNET_CHAT_Handle *handle,
 void
 context_destroy (struct GNUNET_CHAT_Context* context)
 {
+  GNUNET_CONTAINER_multishortmap_iterate(
+      context->timestamps, it_destroy_context_timestamps, NULL
+  );
+
   GNUNET_CONTAINER_multihashmap_iterate(
       context->messages, it_destroy_context_messages, NULL
   );
 
   GNUNET_CONTAINER_multihashmap_iterate(
-      context->messages, it_destroy_context_invites, NULL
+      context->invites, it_destroy_context_invites, NULL
   );
 
+  GNUNET_CONTAINER_multishortmap_destroy(context->timestamps);
   GNUNET_CONTAINER_multihashmap_destroy(context->messages);
   GNUNET_CONTAINER_multihashmap_destroy(context->invites);
   GNUNET_CONTAINER_multihashmap_destroy(context->files);

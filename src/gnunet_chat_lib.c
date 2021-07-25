@@ -306,7 +306,7 @@ GNUNET_CHAT_contact_set_user_pointer (struct GNUNET_CHAT_Contact *contact,
 
 
 void*
-GNUNET_CHAT_contact_get_user_pointer (struct GNUNET_CHAT_Contact *contact)
+GNUNET_CHAT_contact_get_user_pointer (const struct GNUNET_CHAT_Contact *contact)
 {
   if (!contact)
     return NULL;
@@ -611,7 +611,7 @@ GNUNET_CHAT_context_iterate_messages (struct GNUNET_CHAT_Context *context,
 enum GNUNET_CHAT_MessageKind
 GNUNET_CHAT_message_get_kind (const struct GNUNET_CHAT_Message *message)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return GNUNET_CHAT_KIND_UNKNOWN;
 
   switch (message->msg->header.kind)
@@ -641,7 +641,7 @@ GNUNET_CHAT_message_get_kind (const struct GNUNET_CHAT_Message *message)
 struct GNUNET_TIME_Absolute
 GNUNET_CHAT_message_get_timestamp (const struct GNUNET_CHAT_Message *message)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return GNUNET_TIME_absolute_get_zero_();
 
   return GNUNET_TIME_absolute_ntoh(message->msg->header.timestamp);
@@ -701,19 +701,29 @@ GNUNET_CHAT_message_get_read_receipt (const struct GNUNET_CHAT_Message *message,
 				      GNUNET_CHAT_MessageReadReceiptCallback callback,
 				      void *cls)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return GNUNET_SYSERR;
 
-  // TODO: request read receipt? / check if newer message was received of sender?
+  struct GNUNET_CHAT_Context *context = message->context;
 
-  return GNUNET_SYSERR;
+  if (!context)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_CHAT_MessageIterateReadReceipts it;
+  it.message = message;
+  it.cb = callback;
+  it.cls = cls;
+
+  return GNUNET_MESSENGER_iterate_members(
+      context->room, it_message_iterate_read_receipts, &it
+  );
 }
 
 
 const char*
 GNUNET_CHAT_message_get_text (const struct GNUNET_CHAT_Message *message)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return NULL;
 
   if (GNUNET_MESSENGER_KIND_TEXT != message->msg->header.kind)
@@ -726,7 +736,7 @@ GNUNET_CHAT_message_get_text (const struct GNUNET_CHAT_Message *message)
 struct GNUNET_CHAT_File*
 GNUNET_CHAT_message_get_file (const struct GNUNET_CHAT_Message *message)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return NULL;
 
   if (GNUNET_MESSENGER_KIND_FILE != message->msg->header.kind)
@@ -742,7 +752,7 @@ GNUNET_CHAT_message_get_file (const struct GNUNET_CHAT_Message *message)
 struct GNUNET_CHAT_Invitation*
 GNUNET_CHAT_message_get_invitation (const struct GNUNET_CHAT_Message *message)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return NULL;
 
   if (GNUNET_MESSENGER_KIND_INVITE != message->msg->header.kind)
@@ -759,7 +769,7 @@ int
 GNUNET_CHAT_message_delete (const struct GNUNET_CHAT_Message *message,
 			    struct GNUNET_TIME_Relative delay)
 {
-  if (!message)
+  if ((!message) || (!(message->msg)))
     return GNUNET_SYSERR;
 
   struct GNUNET_MESSENGER_Message msg;

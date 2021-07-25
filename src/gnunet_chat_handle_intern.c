@@ -279,6 +279,37 @@ on_handle_message (void *cls,
   if (!context)
     return;
 
+  const struct GNUNET_TIME_Absolute timestamp = GNUNET_TIME_absolute_ntoh(
+      msg->header.timestamp
+  );
+
+  struct GNUNET_ShortHashCode shorthash;
+  util_shorthash_from_member(sender, &shorthash);
+
+  struct GNUNET_TIME_Absolute *time = GNUNET_CONTAINER_multishortmap_get(
+      context->timestamps, &shorthash
+  );
+
+  if (time)
+  {
+    time = GNUNET_new(struct GNUNET_TIME_Absolute);
+    *time = timestamp;
+
+    if (GNUNET_OK != GNUNET_CONTAINER_multishortmap_put(
+	context->timestamps, &shorthash, time,
+	GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
+      GNUNET_free(time);
+  }
+  else
+  {
+    struct GNUNET_TIME_Relative delta = GNUNET_TIME_absolute_get_difference(
+	timestamp, *time
+    );
+
+    if (GNUNET_TIME_relative_get_zero_().rel_value_us == delta.rel_value_us)
+      *time = timestamp;
+  }
+
   struct GNUNET_CHAT_Message *message = GNUNET_CONTAINER_multihashmap_get(
       context->messages, hash
   );
@@ -317,6 +348,16 @@ on_handle_message (void *cls,
 	  context->handle->files, &(file->hash), file,
 	  GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
 	file_destroy(file);
+      break;
+    }
+    case GNUNET_MESSENGER_KIND_DELETE:
+    {
+      struct GNUNET_CHAT_Message *target = GNUNET_CONTAINER_multihashmap_get(
+	  context->messages, &(msg->body.deletion.hash)
+      );
+
+      if (target)
+	target->msg = NULL;
       break;
     }
     default:
