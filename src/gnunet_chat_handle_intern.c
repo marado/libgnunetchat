@@ -190,21 +190,24 @@ struct GNUNET_CHAT_CheckHandleRoomMembers
 int
 check_handle_room_members (void* cls,
 			   GNUNET_UNUSED struct GNUNET_MESSENGER_Room *room,
-                           const struct GNUNET_MESSENGER_Contact *contact)
+                           const struct GNUNET_MESSENGER_Contact *member)
 {
   struct GNUNET_CHAT_CheckHandleRoomMembers *check = cls;
 
-  const struct GNUNET_IDENTITY_PublicKey *contact_key = (
-      GNUNET_MESSENGER_contact_get_key(contact)
+  const struct GNUNET_IDENTITY_PublicKey *member_key = (
+      GNUNET_MESSENGER_contact_get_key(member)
   );
 
-  if (0 == GNUNET_memcmp(contact_key, check->ignore_key))
+  if (0 == GNUNET_memcmp(member_key, check->ignore_key))
     return GNUNET_YES;
 
   if (check->contact)
+  {
+    check->contact = NULL;
     return GNUNET_NO;
+  }
 
-  check->contact = contact;
+  check->contact = member;
   return GNUNET_YES;
 }
 
@@ -245,6 +248,8 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
     struct GNUNET_CHAT_Contact *contact = contact_create_from_member(
       handle, check.contact
     );
+
+    contact->context = context;
 
     struct GNUNET_ShortHashCode shorthash;
     util_shorthash_from_member(check.contact, &shorthash);
@@ -295,14 +300,69 @@ find_handle_rooms (void *cls, struct GNUNET_MESSENGER_Room *room,
   return GNUNET_YES;
 }
 
+int
+scan_handle_room_members (void* cls,
+			  GNUNET_UNUSED struct GNUNET_MESSENGER_Room *room,
+                          const struct GNUNET_MESSENGER_Contact *member)
+{
+  struct GNUNET_CHAT_Handle *handle = cls;
+
+  struct GNUNET_ShortHashCode shorthash;
+  util_shorthash_from_member(member, &shorthash);
+
+  if (GNUNET_YES == GNUNET_CONTAINER_multishortmap_contains(
+      handle->contacts, &shorthash))
+    return GNUNET_YES;
+
+  struct GNUNET_CHAT_Contact *contact = contact_create_from_member(
+      handle, member
+  );
+
+  if (GNUNET_OK == GNUNET_CONTAINER_multishortmap_put(
+      handle->contacts, &shorthash, contact,
+      GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
+    return GNUNET_YES;
+
+  contact_destroy(contact);
+  return GNUNET_NO;
+}
+
+int
+scan_handle_rooms (void *cls, struct GNUNET_MESSENGER_Room *room,
+		   GNUNET_UNUSED const struct GNUNET_MESSENGER_Contact *member)
+{
+  struct GNUNET_CHAT_Handle *handle = cls;
+
+  const struct GNUNET_HashCode *key = GNUNET_MESSENGER_room_get_key(room);
+
+  struct GNUNET_CHAT_Group *group = GNUNET_CONTAINER_multihashmap_get(
+      handle->groups, key
+  );
+
+  if (!group)
+    return GNUNET_YES;
+
+  GNUNET_MESSENGER_iterate_members(room, scan_handle_room_members, handle);
+  return GNUNET_YES;
+}
+
 void
 on_handle_identity(void *cls,
 		   GNUNET_UNUSED struct GNUNET_MESSENGER_Handle *messenger)
 {
   struct GNUNET_CHAT_Handle *handle = cls;
 
+  if ((0 < GNUNET_CONTAINER_multihashmap_size(handle->contexts)) ||
+      (0 < GNUNET_CONTAINER_multihashmap_size(handle->groups)) ||
+      (0 < GNUNET_CONTAINER_multishortmap_size(handle->contacts)))
+    return;
+
   GNUNET_MESSENGER_find_rooms(
       handle->messenger, NULL, find_handle_rooms, handle
+  );
+
+  GNUNET_MESSENGER_find_rooms(
+      handle->messenger, NULL, scan_handle_rooms, handle
   );
 }
 

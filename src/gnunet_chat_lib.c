@@ -591,6 +591,25 @@ GNUNET_CHAT_context_iterate_messages (struct GNUNET_CHAT_Context *context,
 }
 
 
+int
+GNUNET_CHAT_context_iterate_files (struct GNUNET_CHAT_Context *context,
+				   GNUNET_CHAT_ContextFileCallback callback,
+				   void *cls)
+{
+  if (!context)
+    return GNUNET_SYSERR;
+
+  struct GNUNET_CHAT_ContextIterateFiles it;
+  it.context = context;
+  it.cb = callback;
+  it.cls = cls;
+
+  return GNUNET_CONTAINER_multihashmap_iterate(
+      context->files, it_context_iterate_files, &it
+  );
+}
+
+
 enum GNUNET_CHAT_MessageKind
 GNUNET_CHAT_message_get_kind (const struct GNUNET_CHAT_Message *message)
 {

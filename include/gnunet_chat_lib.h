@@ -173,7 +173,19 @@ typedef int
  */
 typedef int
 (*GNUNET_CHAT_ContextMessageCallback) (void *cls, struct GNUNET_CHAT_Context *context,
-				       struct GNUNET_CHAT_Message *message);
+				       const struct GNUNET_CHAT_Message *message);
+
+/**
+ * TODO
+ *
+ * @param cls
+ * @param context
+ * @param file
+ * @return
+ */
+typedef int
+(*GNUNET_CHAT_ContextFileCallback) (void *cls, struct GNUNET_CHAT_Context *context,
+				    struct GNUNET_CHAT_File *file);
 
 /**
  * TODO
@@ -533,6 +545,19 @@ int
 GNUNET_CHAT_context_iterate_messages (struct GNUNET_CHAT_Context *context,
 				      GNUNET_CHAT_ContextMessageCallback callback,
 				      void *cls);
+
+/**
+ * TODO
+ *
+ * @param context
+ * @param callback
+ * @param cls
+ * @return
+ */
+int
+GNUNET_CHAT_context_iterate_files (struct GNUNET_CHAT_Context *context,
+				   GNUNET_CHAT_ContextFileCallback callback,
+				   void *cls);
 
 /**
  * TODO

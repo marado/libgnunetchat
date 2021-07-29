@@ -33,8 +33,6 @@ contact_create_from_member (struct GNUNET_CHAT_Handle *handle,
   contact->handle = handle;
   contact->context = NULL;
 
-  // TODO: search for private context? create private context?
-
   contact->member = member;
 
   contact->user_pointer = NULL;
