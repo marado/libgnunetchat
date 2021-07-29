@@ -211,7 +211,7 @@ check_handle_room_members (void* cls,
   return GNUNET_YES;
 }
 
-struct GNUNET_CHAT_Context*
+int
 request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
 				struct GNUNET_MESSENGER_Room *room)
 {
@@ -222,7 +222,7 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
   );
 
   if (context)
-    return context;
+    return GNUNET_OK;
 
   context = context_create_from_room(handle, room);
   context_load_config(context);
@@ -232,14 +232,16 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
       GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
   {
     context_destroy(context);
-    return NULL;
+    return GNUNET_SYSERR;
   }
 
   struct GNUNET_CHAT_CheckHandleRoomMembers check;
   check.ignore_key = GNUNET_MESSENGER_get_key(handle->messenger);
   check.contact = NULL;
 
-  GNUNET_MESSENGER_iterate_members(room, check_handle_room_members, &check);
+  const int checks = GNUNET_MESSENGER_iterate_members(
+      room, check_handle_room_members, &check
+  );
 
   if (check.contact)
   {
@@ -257,11 +259,11 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
     if (GNUNET_OK == GNUNET_CONTAINER_multishortmap_put(
       handle->contacts, &shorthash, contact,
       GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
-      return context;
+      return GNUNET_OK;
 
     contact_destroy(contact);
   }
-  else
+  else if (checks >= 2)
   {
     context->type = GNUNET_CHAT_CONTEXT_TYPE_GROUP;
 
@@ -277,14 +279,20 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
     if (GNUNET_OK == GNUNET_CONTAINER_multihashmap_put(
       handle->groups, key, group,
       GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST))
-      return context;
+      return GNUNET_OK;
 
     group_destroy(group);
+  }
+  else
+  {
+    context->type = GNUNET_CHAT_CONTEXT_TYPE_UNKNOWN;
+
+    // TODO: handle chats which only contain yourself currently!
   }
 
   GNUNET_CONTAINER_multihashmap_remove(handle->contexts, key, context);
   context_destroy(context);
-  return NULL;
+  return GNUNET_SYSERR;
 }
 
 int
@@ -293,9 +301,8 @@ find_handle_rooms (void *cls, struct GNUNET_MESSENGER_Room *room,
 {
   struct GNUNET_CHAT_Handle *handle = cls;
 
-  request_handle_context_by_room(
-      handle, room
-  );
+  if (GNUNET_OK != request_handle_context_by_room(handle, room))
+    return GNUNET_NO;
 
   return GNUNET_YES;
 }

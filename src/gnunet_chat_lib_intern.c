@@ -68,6 +68,20 @@ it_handle_iterate_groups (void *cls,
   return it->cb(it->cls, it->handle, group);
 }
 
+struct GNUNET_CHAT_ContactFindRoom
+{
+  struct GNUNET_MESSENGER_Room *room;
+};
+
+int
+it_contact_find_room (void *cls, struct GNUNET_MESSENGER_Room *room,
+		      GNUNET_UNUSED const struct GNUNET_MESSENGER_Contact *member)
+{
+  struct GNUNET_CHAT_ContactFindRoom *find = cls;
+  find->room = room;
+  return GNUNET_NO;
+}
+
 struct GNUNET_CHAT_GroupIterateContacts
 {
   struct GNUNET_CHAT_Group *group;
