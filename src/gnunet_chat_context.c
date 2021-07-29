@@ -138,7 +138,9 @@ context_save_config (const struct GNUNET_CHAT_Context *context)
   char* filename;
   util_get_filename(directory, "chats", hash, &filename);
 
-  GNUNET_CONFIGURATION_write(config, filename);
+  if (GNUNET_OK == GNUNET_DISK_directory_create_for_file(filename))
+    GNUNET_CONFIGURATION_write(config, filename);
+
   GNUNET_CONFIGURATION_destroy(config);
 
   GNUNET_free(filename);

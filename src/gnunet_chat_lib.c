@@ -374,7 +374,7 @@ GNUNET_CHAT_group_set_user_pointer (struct GNUNET_CHAT_Group *group,
 
 
 void*
-GNUNET_CHAT_group_get_user_pointer (struct GNUNET_CHAT_Group *group)
+GNUNET_CHAT_group_get_user_pointer (const struct GNUNET_CHAT_Group *group)
 {
   if (!group)
     return NULL;
@@ -475,7 +475,9 @@ GNUNET_CHAT_context_send_text (struct GNUNET_CHAT_Context *context,
 
 int
 GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
-			       const char *path)
+			       const char *path,
+			       GNUNET_CHAT_FileUploadCallback callback,
+			       void *cls)
 {
   if ((!context) || (!path))
     return GNUNET_SYSERR;
@@ -516,6 +518,8 @@ GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
 
   GNUNET_free(p);
 
+  file_bind_upload(file, callback, cls);
+
   struct GNUNET_FS_BlockOptions bo;
 
   bo.anonymity_level = 1;
@@ -543,28 +547,7 @@ GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
   );
 
   GNUNET_free(filename);
-
-  // TODO: share file
-
   return GNUNET_OK;
-}
-
-
-int
-GNUNET_CHAT_context_send_uri (struct GNUNET_CHAT_Context *context,
-			      const char *uri)
-{
-  if ((!context) || (!uri))
-    return GNUNET_SYSERR;
-
-  struct GNUNET_FS_Uri *furi = GNUNET_FS_uri_parse(uri, NULL);
-
-  if (!furi)
-    return GNUNET_SYSERR;
-
-  // TODO: download file, hash file, share file
-
-  return GNUNET_SYSERR;
 }
 
 
@@ -833,9 +816,30 @@ GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file)
 }
 
 
+void
+GNUNET_CHAT_file_set_user_pointer (struct GNUNET_CHAT_File *file,
+				   void *user_pointer)
+{
+  if (!file)
+    return;
+
+  file->user_pointer = user_pointer;
+}
+
+
+void*
+GNUNET_CHAT_file_get_user_pointer (const struct GNUNET_CHAT_File *file)
+{
+  if (!file)
+    return NULL;
+
+  return file->user_pointer;
+}
+
+
 int
 GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
-				 GNUNET_CHAT_MessageFileDownloadCallback callback,
+				 GNUNET_CHAT_FileDownloadCallback callback,
 				 void *cls)
 {
   if ((!file) || (!(file->uri)))
@@ -843,8 +847,10 @@ GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
 
   if (file->download)
   {
+    file_bind_downlaod(file, callback, cls);
+
     GNUNET_FS_download_resume(file->download);
-    return GNUNET_OK;
+    return GNUNET_NO;
   }
 
   const uint64_t size = GNUNET_FS_uri_chk_get_file_size(file->uri);
@@ -859,7 +865,14 @@ GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
     offset = 0;
 
   if (offset >= size)
-    return GNUNET_OK;
+  {
+    if (callback)
+      callback(cls, file, size, size);
+
+    return GNUNET_YES;
+  }
+
+  file_bind_downlaod(file, callback, cls);
 
   const uint64_t remaining = (size - offset);
 
@@ -878,7 +891,7 @@ GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
   );
 
   GNUNET_free(filename);
-  return GNUNET_OK;
+  return GNUNET_YES;
 }
 
 
@@ -917,7 +930,9 @@ GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file)
 
 
 int
-GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file)
+GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file,
+			  GNUNET_CHAT_FileUnindexCallback callback,
+			  void *cls)
 {
   if (!file)
     return GNUNET_SYSERR;
@@ -928,6 +943,8 @@ GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file)
     file->publish = NULL;
     return GNUNET_OK;
   }
+
+  file_bind_unindex(file, callback, cls);
 
   if (file->unindex)
     return GNUNET_OK;

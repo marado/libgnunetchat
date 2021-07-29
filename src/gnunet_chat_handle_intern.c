@@ -71,13 +71,21 @@ notify_handle_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info)
     case GNUNET_FS_STATUS_PUBLISH_START: {
       struct GNUNET_CHAT_File *file = info->value.publish.cctx;
 
-      file->published = 0;
+      file_update_upload(
+	  file,
+	  0,
+	  info->value.publish.size
+      );
 
       return file;
     } case GNUNET_FS_STATUS_PUBLISH_PROGRESS: {
       struct GNUNET_CHAT_File *file = info->value.publish.cctx;
 
-      file->published = info->value.publish.completed;
+      file_update_upload(
+	  file,
+	  info->value.publish.completed,
+	  info->value.publish.size
+      );
 
       return file;
     } case GNUNET_FS_STATUS_PUBLISH_COMPLETED: {
@@ -87,7 +95,12 @@ notify_handle_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info)
 	  info->value.publish.specifics.completed.chk_uri
       );
 
-      file->published = info->value.publish.size;
+      file_update_upload(
+      	  file,
+	  info->value.publish.size,
+      	  info->value.publish.size
+      );
+
       file->publish = NULL;
       break;
     } case GNUNET_FS_STATUS_PUBLISH_ERROR: {
@@ -95,7 +108,11 @@ notify_handle_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info)
     } case GNUNET_FS_STATUS_DOWNLOAD_START: {
       struct GNUNET_CHAT_File *file = info->value.download.cctx;
 
-      file->downloaded = 0;
+      file_update_download(
+	  file,
+      	  0,
+      	  info->value.download.size
+      );
 
       return file;
     } case GNUNET_FS_STATUS_DOWNLOAD_ACTIVE: {
@@ -105,13 +122,22 @@ notify_handle_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info)
     } case GNUNET_FS_STATUS_DOWNLOAD_PROGRESS: {
       struct GNUNET_CHAT_File *file = info->value.download.cctx;
 
-      file->downloaded = info->value.download.completed;
+      file_update_download(
+      	  file,
+	  info->value.download.completed,
+	  info->value.download.size
+      );
 
       return file;
     } case GNUNET_FS_STATUS_DOWNLOAD_COMPLETED: {
       struct GNUNET_CHAT_File *file = info->value.download.cctx;
 
-      file->downloaded = info->value.download.size;
+      file_update_download(
+	  file,
+	  info->value.download.size,
+	  info->value.download.size
+      );
+
       file->download = NULL;
       break;
     } case GNUNET_FS_STATUS_DOWNLOAD_ERROR: {
@@ -119,19 +145,32 @@ notify_handle_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info)
     } case GNUNET_FS_STATUS_UNINDEX_START: {
       struct GNUNET_CHAT_File *file = info->value.unindex.cctx;
 
-      file->unindexed = 0;
+      file_update_unindex(
+	  file,
+      	  0,
+      	  info->value.unindex.size
+      );
 
       return file;
     } case GNUNET_FS_STATUS_UNINDEX_PROGRESS: {
       struct GNUNET_CHAT_File *file = info->value.unindex.cctx;
 
-      file->unindexed = info->value.unindex.completed;
+      file_update_unindex(
+      	  file,
+	  info->value.unindex.completed,
+	  info->value.unindex.size
+      );
 
       return file;
     } case GNUNET_FS_STATUS_UNINDEX_COMPLETED: {
       struct GNUNET_CHAT_File *file = info->value.unindex.cctx;
 
-      file->unindexed = info->value.unindex.size;
+      file_update_unindex(
+	  file,
+      	  info->value.unindex.size,
+      	  info->value.unindex.size
+      );
+
       file->unindex = NULL;
       break;
     } default: {
@@ -224,6 +263,11 @@ request_handle_context_by_room (struct GNUNET_CHAT_Handle *handle,
     struct GNUNET_CHAT_Group *group = group_create_from_context(
       handle, context
     );
+
+    group_load_config(group);
+
+    if (group->topic)
+      group_publish(group);
 
     if (GNUNET_OK == GNUNET_CONTAINER_multihashmap_put(
       handle->groups, key, group,
@@ -382,6 +426,7 @@ it_destroy_handle_groups (GNUNET_UNUSED void *cls,
 			  void *value)
 {
   struct GNUNET_CHAT_Group *group = value;
+  group_save_config(group);
   group_destroy(group);
   return GNUNET_YES;
 }

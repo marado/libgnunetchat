@@ -32,6 +32,38 @@
 #include <gnunet/gnunet_messenger_service.h>
 #include <gnunet/gnunet_util_lib.h>
 
+#include "gnunet_chat_lib.h"
+
+struct GNUNET_CHAT_FileUpload
+{
+  struct GNUNET_CHAT_FileUpload* prev;
+  struct GNUNET_CHAT_FileUpload* next;
+
+  GNUNET_CHAT_FileUploadCallback callback;
+
+  void *cls;
+};
+
+struct GNUNET_CHAT_FileDownload
+{
+  struct GNUNET_CHAT_FileDownload* prev;
+  struct GNUNET_CHAT_FileDownload* next;
+
+  GNUNET_CHAT_FileDownloadCallback callback;
+
+  void *cls;
+};
+
+struct GNUNET_CHAT_FileUnindex
+{
+  struct GNUNET_CHAT_FileUnindex* prev;
+  struct GNUNET_CHAT_FileUnindex* next;
+
+  GNUNET_CHAT_FileUnindexCallback callback;
+
+  void *cls;
+};
+
 struct GNUNET_CHAT_Handle;
 
 struct GNUNET_CHAT_File
@@ -43,16 +75,23 @@ struct GNUNET_CHAT_File
   struct GNUNET_HashCode hash;
   struct GNUNET_CRYPTO_SymmetricSessionKey key;
 
-  uint64_t published;
-  uint64_t downloaded;
-  uint64_t unindexed;
-
   struct GNUNET_CONTAINER_MetaData *meta;
 
-  struct GNUNET_FS_Uri* uri;
-  struct GNUNET_FS_DownloadContext* download;
-  struct GNUNET_FS_PublishContext* publish;
-  struct GNUNET_FS_UnindexContext* unindex;
+  struct GNUNET_FS_Uri *uri;
+  struct GNUNET_FS_DownloadContext *download;
+  struct GNUNET_FS_PublishContext *publish;
+  struct GNUNET_FS_UnindexContext *unindex;
+
+  struct GNUNET_CHAT_FileUpload *upload_head;
+  struct GNUNET_CHAT_FileUpload *upload_tail;
+
+  struct GNUNET_CHAT_FileDownload *download_head;
+  struct GNUNET_CHAT_FileDownload *download_tail;
+
+  struct GNUNET_CHAT_FileUnindex *unindex_head;
+  struct GNUNET_CHAT_FileUnindex *unindex_tail;
+
+  void *user_pointer;
 };
 
 struct GNUNET_CHAT_File*
@@ -66,5 +105,29 @@ file_create_from_disk (struct GNUNET_CHAT_Handle *handle,
 
 void
 file_destroy (struct GNUNET_CHAT_File* file);
+
+void
+file_bind_upload (struct GNUNET_CHAT_File* file,
+		  GNUNET_CHAT_FileUploadCallback cb, void *cls);
+
+void
+file_bind_downlaod (struct GNUNET_CHAT_File* file,
+		    GNUNET_CHAT_FileDownloadCallback cb, void *cls);
+
+void
+file_bind_unindex (struct GNUNET_CHAT_File* file,
+		   GNUNET_CHAT_FileUnindexCallback cb, void *cls);
+
+void
+file_update_upload (struct GNUNET_CHAT_File* file, uint64_t completed,
+		    uint64_t size);
+
+void
+file_update_download (struct GNUNET_CHAT_File* file, uint64_t completed,
+		      uint64_t size);
+
+void
+file_update_unindex (struct GNUNET_CHAT_File* file, uint64_t completed,
+		     uint64_t size);
 
 #endif /* GNUNET_CHAT_FILE_H_ */

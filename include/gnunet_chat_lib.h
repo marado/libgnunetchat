@@ -195,10 +195,11 @@ typedef int
  * @param cls
  * @param file
  * @param completed
+ * @param size
  */
-typedef int
-(*GNUNET_CHAT_MessageFileUploadCallback) (void *cls, const struct GNUNET_CHAT_File *file,
-					  uint64_t completed);
+typedef void
+(*GNUNET_CHAT_FileUploadCallback) (void *cls, const struct GNUNET_CHAT_File *file,
+				   uint64_t completed, uint64_t size);
 
 /**
  * TODO
@@ -206,10 +207,23 @@ typedef int
  * @param cls
  * @param file
  * @param completed
+ * @param size
  */
-typedef int
-(*GNUNET_CHAT_MessageFileDownloadCallback) (void *cls, struct GNUNET_CHAT_File *file,
-					    uint64_t completed);
+typedef void
+(*GNUNET_CHAT_FileDownloadCallback) (void *cls, const struct GNUNET_CHAT_File *file,
+				     uint64_t completed, uint64_t size);
+
+/**
+ * TODO
+ *
+ * @param cls
+ * @param file
+ * @param completed
+ * @param size
+ */
+typedef void
+(*GNUNET_CHAT_FileUnindexCallback) (void *cls, struct GNUNET_CHAT_File *file,
+				    uint64_t completed, uint64_t size);
 
 /**
  * TODO
@@ -420,7 +434,7 @@ GNUNET_CHAT_group_set_user_pointer (struct GNUNET_CHAT_Group *group,
  * @param group
  */
 void*
-GNUNET_CHAT_group_get_user_pointer (struct GNUNET_CHAT_Group *group);
+GNUNET_CHAT_group_get_user_pointer (const struct GNUNET_CHAT_Group *group);
 
 /**
  * TODO
@@ -492,18 +506,9 @@ GNUNET_CHAT_context_send_text (struct GNUNET_CHAT_Context *context,
  */
 int
 GNUNET_CHAT_context_send_file (struct GNUNET_CHAT_Context *context,
-			       const char *path);
-
-/**
- * TODO
- *
- * @param context
- * @param uri
- * @return
- */
-int
-GNUNET_CHAT_context_send_uri (struct GNUNET_CHAT_Context *context,
-			      const char *uri);
+			       const char *path,
+			       GNUNET_CHAT_FileUploadCallback callback,
+			       void *cls);
 
 /**
  * TODO
@@ -657,11 +662,30 @@ GNUNET_CHAT_file_is_local (const struct GNUNET_CHAT_File *file);
  * TODO
  *
  * @param file
+ * @param user_pointer
+ */
+void
+GNUNET_CHAT_file_set_user_pointer (struct GNUNET_CHAT_File *file,
+				   void *user_pointer);
+
+/**
+ * TODO
+ *
+ * @param file
+ * @return
+ */
+void*
+GNUNET_CHAT_file_get_user_pointer (const struct GNUNET_CHAT_File *file);
+
+/**
+ * TODO
+ *
+ * @param file
  * @return
  */
 int
 GNUNET_CHAT_file_start_download (struct GNUNET_CHAT_File *file,
-				 GNUNET_CHAT_MessageFileDownloadCallback callback,
+				 GNUNET_CHAT_FileDownloadCallback callback,
 				 void *cls);
 
 /**
@@ -695,10 +719,14 @@ GNUNET_CHAT_file_stop_download (struct GNUNET_CHAT_File *file);
  * TODO
  *
  * @param file
+ * @param callback
+ * @param cls
  * @return
  */
 int
-GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file);
+GNUNET_CHAT_file_unindex (struct GNUNET_CHAT_File *file,
+			  GNUNET_CHAT_FileUnindexCallback callback,
+			  void *cls);
 
 /**
  * TODO

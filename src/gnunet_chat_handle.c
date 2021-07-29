@@ -64,12 +64,22 @@ handle_create_from_config (const struct GNUNET_CONFIGURATION_Handle* cfg,
   if (handle->arm)
     on_handle_arm_connection(handle, GNUNET_NO);
 
+  char* fs_client_name = NULL;
+  GNUNET_asprintf (
+      &fs_client_name,
+      "GNUNET_CHAT_%s%s",
+      name? "_" : "anonymous",
+      name? name : ""
+  );
+
   handle->fs = GNUNET_FS_start(
-      handle->cfg, name, // TODO: raw name? (NULL?)
+      handle->cfg, fs_client_name,
       notify_handle_fs_progress, handle,
       GNUNET_FS_FLAGS_NONE,
       GNUNET_FS_OPTIONS_END
   );
+
+  GNUNET_free(fs_client_name);
 
   handle->messenger = GNUNET_MESSENGER_connect(
       handle->cfg, name,

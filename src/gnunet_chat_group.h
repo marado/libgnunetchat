@@ -56,4 +56,10 @@ group_destroy (struct GNUNET_CHAT_Group* group);
 void
 group_publish (struct GNUNET_CHAT_Group* group);
 
+void
+group_load_config (struct GNUNET_CHAT_Group *group);
+
+void
+group_save_config (const struct GNUNET_CHAT_Group *group);
+
 #endif /* GNUNET_CHAT_GROUP_H_ */
